@@ -1,0 +1,2670 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Christina's Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* ─── DESIGN TOKENS ─────────────────────────────────── */
+:root {
+  --bg:        #F7F6F3;
+  --surface:   #FFFFFF;
+  --border:    #E8E5DF;
+  --border-2:  #D6D2CA;
+  --text-1:    #1A1A1A;
+  --text-2:    #6B6B6B;
+  --text-3:    #9E9E9E;
+  --text-4:    #B5ADA2;
+  --input-bg:  #F7F6F3;
+
+  /* phase accent — overridden by JS */
+  --accent:    #E8611A;
+  --accent-10: #FEF0E7;
+
+  --radius-sm: 8px;
+  --radius:    12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  --sidebar-w: 220px;
+  --shadow:    0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.04);
+  --shadow-md: 0 2px 8px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.06);
+}
+
+/* ─── RESET ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+body {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  background: var(--bg);
+  color: var(--text-1);
+  min-height: 100vh;
+  display: flex;
+  overflow-x: hidden;
+}
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input, textarea { font-family: inherit; }
+textarea { resize: vertical; }
+a { color: inherit; text-decoration: none; }
+
+/* ─── SIDEBAR ────────────────────────────────────────── */
+#sidebar {
+  width: var(--sidebar-w);
+  min-height: 100vh;
+  background: #1C1C1C;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  z-index: 100;
+  padding: 0 0 24px;
+  overflow-y: auto;
+}
+.sidebar-brand {
+  padding: 22px 20px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  margin-bottom: 8px;
+}
+.brand-tag {
+  font-size: 9px;
+  letter-spacing: 3px;
+  font-weight: 800;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.brand-name {
+  font-family: 'Dancing Script', cursive;
+  font-size: 19px;
+  color: #fff;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.sidebar-phase {
+  margin: 0 12px 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.07);
+}
+.phase-year { font-size: 20px; font-weight: 900; color: var(--accent); line-height: 1; }
+.phase-label { font-size: 10px; color: rgba(255,255,255,.4); font-weight: 600; margin-top: 1px; }
+.phase-goals { margin-top: 8px; display: flex; flex-direction: column; gap: 3px; }
+.phase-goal-item { font-size: 10.5px; color: rgba(255,255,255,.55); padding: 0 0 0 10px; position: relative; }
+.phase-goal-item::before { content:'·'; position:absolute; left:0; color: var(--accent); }
+
+.sidebar-section-label {
+  padding: 10px 20px 4px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+  color: rgba(255,255,255,.25);
+  text-transform: uppercase;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  margin: 1px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background .12s, color .12s;
+  color: rgba(255,255,255,.55);
+  font-size: 13.5px;
+  font-weight: 500;
+  user-select: none;
+}
+.nav-item:hover { background: rgba(255,255,255,.07); color: rgba(255,255,255,.85); }
+.nav-item.active { background: rgba(255,255,255,.1); color: #fff; font-weight: 700; }
+.nav-icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+.nav-badge {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--accent);
+  color: white;
+  border-radius: 20px;
+  padding: 1px 7px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.sidebar-date {
+  margin-top: auto;
+  padding: 16px 16px 0;
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+.sidebar-date-label { font-size: 9px; color: rgba(255,255,255,.25); font-weight: 700; letter-spacing: 1.5px; margin-bottom: 4px; }
+.sidebar-date-val { font-size: 11.5px; color: rgba(255,255,255,.5); font-weight: 500; line-height: 1.5; }
+
+/* ─── MAIN LAYOUT ────────────────────────────────────── */
+#main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+#topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.topbar-title { font-size: 15px; font-weight: 700; color: var(--text-1); }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.topbar-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+.topbar-stat span { color: var(--accent); font-size: 13px; }
+
+#content {
+  padding: 28px 32px 48px;
+  width: 100%;
+}
+
+.content-inner {
+  max-width: 820px;
+}
+
+/* ─── CARDS ──────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  box-shadow: var(--shadow);
+}
+.card + .card, .card + .card-dark { margin-top: 12px; }
+.card-dark {
+  background: #1C1C1C;
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  box-shadow: var(--shadow);
+}
+.section-gap { display: flex; flex-direction: column; gap: 12px; max-width: 820px; }
+
+/* ─── LABELS ─────────────────────────────────────────── */
+.label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.label-accent { color: var(--accent); }
+
+/* ─── HERO BANNER ────────────────────────────────────── */
+.hero-banner {
+  background: #1C1C1C;
+  border-radius: var(--radius-lg);
+  padding: 24px 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  box-shadow: var(--shadow);
+}
+.hero-greeting { font-size: 12px; color: rgba(255,255,255,.4); font-weight: 500; margin-bottom: 6px; }
+.hero-title { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -.3px; margin-bottom: 10px; line-height: 1.25; }
+.hero-goals { font-size: 11px; color: var(--accent); font-weight: 700; letter-spacing: .5px; }
+
+/* ─── RING ───────────────────────────────────────────── */
+.ring-wrap { position: relative; flex-shrink: 0; }
+.ring-inner {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.ring-pct { font-size: 26px; font-weight: 800; line-height: 1; }
+.ring-label { font-size: 8.5px; font-weight: 700; letter-spacing: 1.5px; margin-top: 2px; }
+
+/* ─── TASK ROWS ──────────────────────────────────────── */
+.task-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
+.task-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--input-bg);
+  transition: border-color .15s, background .15s;
+}
+.task-row.done { background: var(--accent-10); border-color: var(--accent); border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+.task-check {
+  width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid var(--border-2);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all .15s; background: white;
+  font-size: 12px; font-weight: 700; color: white;
+}
+.task-check.checked { background: var(--accent); border-color: var(--accent); }
+.task-check:hover { transform: scale(1.1); }
+.task-text { flex: 1; font-size: 13.5px; font-weight: 600; color: var(--text-1); transition: color .15s; }
+.task-text.done { color: var(--text-3); text-decoration: line-through; font-weight: 400; }
+.task-del { opacity: 0; cursor: pointer; color: var(--text-4); font-size: 18px; line-height: 1; transition: opacity .15s; padding: 0 2px; }
+.task-row:hover .task-del { opacity: 1; }
+
+.empty-state { font-size: 13px; color: var(--text-4); font-style: italic; padding: 6px 2px; }
+
+/* ─── INPUT ROW ──────────────────────────────────────── */
+.input-row { display: flex; gap: 8px; }
+.input-field {
+  flex: 1; padding: 10px 14px;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--border);
+  font-size: 13.5px;
+  background: var(--input-bg);
+  color: var(--text-1);
+  transition: border-color .15s, background .15s;
+  outline: none;
+}
+.input-field:focus { border-color: var(--accent); background: white; }
+.btn {
+  padding: 10px 18px;
+  border-radius: var(--radius);
+  font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all .15s;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn-dark { background: #1C1C1C; color: white; border: none; }
+.btn-dark:hover { background: #2a2a2a; }
+.btn-outline { background: white; border: 1.5px solid var(--border); color: var(--text-2); }
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+.btn-accent { background: var(--accent); color: white; border: none; box-shadow: 0 3px 10px color-mix(in srgb, var(--accent) 35%, transparent); }
+.btn-accent:hover { filter: brightness(1.07); }
+.btn-ghost { background: none; border: none; color: var(--text-3); font-size: 12px; font-weight: 600; padding: 5px 10px; }
+.btn-ghost:hover { color: var(--text-1); }
+
+/* ─── PROGRESS BAR ───────────────────────────────────── */
+.progress-track { height: 7px; background: var(--border); border-radius: 20px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 20px; transition: width .5s cubic-bezier(.4,0,.2,1); }
+
+/* ─── HABIT CHIPS ────────────────────────────────────── */
+.habit-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.habit-chip {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 14px; border-radius: 30px;
+  border: 1.5px solid var(--border);
+  background: var(--input-bg);
+  cursor: pointer; transition: all .15s;
+  font-size: 13px; font-weight: 600; color: var(--text-1);
+  user-select: none;
+}
+.habit-chip.done { background: var(--accent); border-color: var(--accent); color: white; }
+.habit-chip:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+/* ─── MOOD PICKER ────────────────────────────────────── */
+.mood-row { display: flex; gap: 8px; }
+.mood-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 12px 4px; border-radius: var(--radius);
+  border: 2px solid var(--border); background: var(--input-bg);
+  cursor: pointer; transition: all .15s; user-select: none;
+}
+.mood-btn.sel { border-color: var(--mood-color); background: color-mix(in srgb, var(--mood-color) 12%, transparent); }
+.mood-btn:hover { transform: translateY(-1px); }
+.mood-emoji { font-size: 24px; }
+.mood-label { font-size: 10px; font-weight: 700; color: var(--text-3); }
+.mood-btn.sel .mood-label { color: var(--text-1); }
+
+/* ─── POMODORO ───────────────────────────────────────── */
+.pomo-presets { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 20px; }
+.pomo-preset {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 30px;
+  border: 1.5px solid var(--border);
+  background: var(--input-bg);
+  cursor: pointer; transition: all .15s;
+  font-size: 12.5px; font-weight: 700; color: var(--text-2);
+}
+.pomo-preset.sel { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.pomo-preset:hover { border-color: var(--accent); color: var(--accent); }
+.pomo-center { display: flex; align-items: center; justify-content: center; gap: 32px; flex-wrap: wrap; }
+.pomo-controls { display: flex; flex-direction: column; gap: 10px; min-width: 150px; }
+.pomo-count { text-align: center; font-size: 12.5px; font-weight: 700; color: var(--text-2); margin-top: 4px; }
+
+/* ─── WEEK BAR ───────────────────────────────────────── */
+.week-dots { display: flex; gap: 4px; }
+.week-dot { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.week-dot-sq {
+  width: 22px; height: 22px; border-radius: 6px;
+  background: var(--border); border: 2px solid transparent;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: white;
+}
+.week-dot-sq.done { background: var(--accent); }
+.week-dot-sq.today { border-color: var(--text-1); }
+.week-dot-sq.done.today { border-color: var(--accent); }
+.week-dot-label { font-size: 7.5px; color: var(--text-4); font-weight: 700; }
+
+/* ─── HABIT FULL ROW ─────────────────────────────────── */
+.habit-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--input-bg);
+  flex-wrap: wrap; transition: box-shadow .15s;
+}
+.habit-row:hover { box-shadow: var(--shadow-md); }
+.habit-icon-box {
+  width: 42px; height: 42px; border-radius: var(--radius-sm);
+  background: var(--accent-10);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 21px; flex-shrink: 0;
+}
+.habit-meta { flex: 1; min-width: 120px; }
+.habit-name { font-size: 13.5px; font-weight: 700; color: var(--text-1); }
+.habit-streak { font-size: 11.5px; font-weight: 700; margin-top: 2px; }
+.habit-streak.active { color: var(--accent); }
+.habit-streak.inactive { color: var(--text-4); }
+
+/* ─── GOAL CARD ──────────────────────────────────────── */
+.goal-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  box-shadow: var(--shadow);
+}
+.goal-header { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
+.goal-icon-box {
+  width: 48px; height: 48px; border-radius: var(--radius);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; flex-shrink: 0;
+}
+.goal-title { font-size: 16px; font-weight: 800; color: var(--text-1); }
+.goal-tag {
+  display: inline-block; margin-top: 4px;
+  font-size: 10px; font-weight: 700;
+  padding: 2px 10px; border-radius: 20px;
+}
+.goal-pct-box { text-align: right; margin-left: auto; }
+.goal-pct-num { font-size: 22px; font-weight: 800; }
+.goal-pct-sub { font-size: 10px; color: var(--text-3); font-weight: 600; }
+
+.goal-steps { display: flex; flex-direction: column; gap: 7px; margin-bottom: 12px; }
+.step-row {
+  display: flex; align-items: center; gap: 11px;
+  padding: 9px 12px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--input-bg);
+  transition: all .15s;
+}
+.step-check {
+  width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid var(--border-2); background: white;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 11px; font-weight: 700; color: var(--text-3);
+  transition: all .15s;
+}
+.step-check:hover { transform: scale(1.1); }
+.step-check.checked { color: white; }
+.step-text { flex: 1; font-size: 13px; font-weight: 600; color: var(--text-1); line-height: 1.45; transition: all .15s; }
+.step-text.done { text-decoration: line-through; color: var(--text-3); font-weight: 400; }
+.step-del { opacity: 0; transition: opacity .15s; cursor: pointer; color: var(--text-4); font-size: 17px; }
+.step-row:hover .step-del { opacity: 1; }
+
+/* ─── JOURNAL ────────────────────────────────────────── */
+.grat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.grat-num {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--accent-10); color: var(--accent);
+  font-size: 12px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.journal-note { font-size: 11px; color: var(--text-4); font-style: italic; margin-top: 12px; }
+
+/* ─── CALENDAR MOOD ──────────────────────────────────── */
+.cal-grid {
+  display: grid; grid-template-columns: repeat(7,1fr);
+  gap: 4px; max-width: 340px;
+}
+.cal-head { text-align: center; font-size: 9px; font-weight: 800; color: var(--text-4); padding-bottom: 3px; }
+.cal-day {
+  height: 30px; border-radius: 6px;
+  background: #F0EBE3;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: var(--text-4);
+  border: 2px solid transparent;
+  transition: transform .1s;
+  cursor: default;
+}
+.cal-day.today { border-color: var(--text-1); }
+.cal-day.has-mood { color: white; }
+.mood-legend { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+.mood-legend-item { display: flex; align-items: center; gap: 5px; }
+.mood-legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+.mood-legend-label { font-size: 10px; color: var(--text-3); font-weight: 600; }
+
+/* ─── FINANCE ────────────────────────────────────────── */
+.finance-grid { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+.finance-field { flex: 1; min-width: 160px; }
+.field-label { font-size: 12px; font-weight: 700; color: var(--text-2); margin-bottom: 6px; }
+.field-note { font-size: 11px; color: var(--text-3); margin-top: 5px; }
+.finance-target {
+  padding: 14px 16px; border-radius: var(--radius);
+  background: #E3F2FD; display: flex;
+  justify-content: space-between; align-items: center; margin-top: 14px;
+  flex-wrap: wrap; gap: 8px;
+}
+.finance-target-label { font-size: 13px; font-weight: 600; color: #1565C0; }
+.finance-target-val { font-size: 18px; font-weight: 800; color: #1565C0; }
+
+.bar-chart { display: flex; gap: 8px; align-items: flex-end; height: 130px; margin-top: 4px; }
+.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.bar-val { font-size: 9px; font-weight: 700; color: var(--text-3); height: 14px; display: flex; align-items: flex-end; }
+.bar-track {
+  width: 100%; max-width: 44px; height: 90px;
+  background: #F0EBE3; border-radius: 7px;
+  position: relative; display: flex; align-items: flex-end; overflow: hidden;
+}
+.bar-target-line { position: absolute; top: 0; left: 0; right: 0; border-top: 1.5px dashed #C9C2B7; }
+.bar-fill { width: 100%; border-radius: 7px 7px 0 0; transition: height .4s ease; }
+.bar-month { font-size: 10px; font-weight: 700; }
+
+/* ─── OVERVIEW ───────────────────────────────────────── */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px,1fr));
+  gap: 10px; flex: 1; min-width: 220px;
+}
+.stat-tile {
+  padding: 14px 12px; border-radius: var(--radius);
+  background: var(--input-bg); border: 1px solid var(--border);
+  text-align: center;
+}
+.stat-tile-val { font-size: 21px; font-weight: 800; color: var(--accent); }
+.stat-tile-label { font-size: 10px; color: var(--text-3); font-weight: 600; margin-top: 3px; }
+
+.goal-overview-row { display: flex; align-items: center; gap: 12px; }
+.goal-overview-meta { width: 150px; flex-shrink: 0; }
+.goal-overview-name { font-size: 13px; font-weight: 700; color: var(--text-1); }
+.goal-overview-sub { font-size: 10px; color: var(--text-3); }
+.goal-overview-pct { font-size: 12px; font-weight: 800; width: 36px; text-align: right; flex-shrink: 0; }
+
+.phase-cards { display: flex; gap: 9px; overflow-x: auto; padding-bottom: 6px; }
+.phase-card {
+  flex: 1 0 150px; padding: 15px 13px;
+  border-radius: var(--radius);
+  border: 2px solid var(--border);
+  background: var(--surface);
+  position: relative;
+  cursor: pointer;
+  transition: transform .15s, box-shadow .15s, border-color .15s;
+  user-select: none;
+}
+.phase-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.phase-card.active { border-color: var(--phase-col); background: var(--phase-light); }
+.phase-card.selected { border-color: var(--phase-col) !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--phase-col) 20%, transparent); }
+.phase-card-badge {
+  position: absolute; top: -9px; right: 10px;
+  background: var(--phase-col); color: white;
+  font-size: 8.5px; font-weight: 800; letter-spacing: 1px;
+  padding: 2px 8px; border-radius: 20px;
+}
+.phase-card-emoji { font-size: 20px; margin-bottom: 5px; }
+.phase-card-year { font-size: 15px; font-weight: 900; }
+.phase-card-label { font-size: 10px; color: var(--text-3); font-weight: 600; margin-bottom: 7px; }
+.phase-card-goal { font-size: 10.5px; color: var(--text-2); margin-bottom: 3px; padding-left: 9px; position: relative; }
+.phase-card-goal::before { content:'·'; position:absolute; left:0; }
+.phase-card-hint { font-size: 9px; color: var(--text-4); font-weight: 600; margin-top: 8px; letter-spacing: .5px; }
+
+/* Phase detail drawer */
+.phase-detail {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  animation: slideDown .22s cubic-bezier(.4,0,.2,1);
+}
+@keyframes slideDown {
+  from { opacity:0; transform:translateY(-8px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.phase-detail-header { display:flex; align-items:center; gap:14px; margin-bottom:18px; flex-wrap:wrap; }
+.phase-detail-icon { font-size:28px; }
+.phase-detail-title { font-size:18px; font-weight:900; }
+.phase-detail-sub { font-size:11.5px; color:var(--text-3); font-weight:600; margin-top:2px; }
+.phase-detail-close { margin-left:auto; cursor:pointer; color:var(--text-3); font-size:20px; line-height:1; padding:4px; transition:color .12s; }
+.phase-detail-close:hover { color:var(--text-1); }
+.phase-detail-goals-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; margin-bottom:18px; }
+.phase-goal-tile {
+  padding:13px 14px; border-radius:var(--radius);
+  border:1.5px solid var(--border); background:var(--bg);
+}
+.phase-goal-tile-icon { font-size:17px; margin-bottom:5px; }
+.phase-goal-tile-title { font-size:13.5px; font-weight:800; color:var(--text-1); }
+.phase-goal-tile-target { font-size:11px; color:var(--text-3); font-weight:600; margin-top:2px; }
+.phase-goal-tile-bar { height:5px; background:var(--border); border-radius:10px; overflow:hidden; margin-top:10px; }
+.phase-goal-tile-fill { height:100%; border-radius:10px; transition:width .5s; }
+.phase-goal-tile-pct { font-size:11px; font-weight:800; margin-top:5px; }
+.phase-detail-cta {
+  display:flex; align-items:center; gap:10px;
+  padding:13px 16px; border-radius:var(--radius);
+  border:1.5px dashed var(--border-2); cursor:pointer;
+  font-size:13px; font-weight:700; color:var(--text-2);
+  transition:all .15s; background:transparent;
+}
+.phase-detail-cta:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-10); }
+
+.why-box { display: flex; gap: 14px; align-items: flex-start; }
+.why-icon { font-size: 19px; }
+.why-sub { font-size: 10px; font-weight: 800; letter-spacing: 2px; color: var(--accent); margin-bottom: 5px; }
+.why-text { font-size: 13px; color: rgba(255,255,255,.72); line-height: 1.75; }
+
+.cursive-footer {
+  text-align: right;
+  font-family: 'Dancing Script', cursive;
+  font-size: 15px; color: #C8963C;
+  font-style: italic; opacity: .7;
+  margin-top: 4px;
+}
+
+/* ─── ICON PICKER ────────────────────────────────────── */
+.icon-picker { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; }
+.icon-opt {
+  width: 32px; height: 32px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; cursor: pointer;
+  border: 1.5px solid var(--border);
+  background: var(--input-bg);
+  transition: all .12s;
+}
+.icon-opt.sel { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+
+/* ─── JOURNAL HISTORY ────────────────────────────────── */
+.journal-history { display: flex; flex-direction: column; gap: 9px; max-height: 400px; overflow-y: auto; margin-top: 14px; }
+.journal-entry {
+  padding: 12px 15px; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--input-bg);
+}
+.journal-entry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
+.journal-entry-date { font-size: 11px; font-weight: 800; color: var(--accent); }
+.journal-entry-grat { font-size: 12.5px; color: var(--text-2); margin-bottom: 2px; }
+.journal-entry-lesson {
+  font-size: 12.5px; color: var(--text-2); margin-top: 6px;
+  padding-top: 6px; border-top: 1px dashed var(--border);
+}
+
+/* ─── STATS SUMMARY ──────────────────────────────────── */
+.summary-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.summary-tile {
+  flex: 1; min-width: 120px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 15px 14px; text-align: center;
+  box-shadow: var(--shadow);
+}
+.summary-val { font-size: 26px; font-weight: 800; color: var(--accent); }
+.summary-label { font-size: 10.5px; color: var(--text-3); font-weight: 600; margin-top: 2px; }
+
+
+/* ─── BACKUP / RESTORE ───────────────────────────────── */
+.backup-modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.55); backdrop-filter: blur(4px);
+  z-index: 1000; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.backup-modal-overlay.show { display: flex; }
+.backup-modal {
+  background: white; border-radius: 20px;
+  padding: 28px 28px 24px; max-width: 520px; width: 100%;
+  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+  animation: modalIn .2s cubic-bezier(.4,0,.2,1);
+}
+@keyframes modalIn {
+  from { opacity:0; transform:translateY(16px) scale(.97); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
+}
+.backup-modal-title {
+  font-size: 17px; font-weight: 900; color: var(--text-1);
+  margin-bottom: 4px;
+}
+.backup-modal-sub {
+  font-size: 12.5px; color: var(--text-3); margin-bottom: 22px; line-height: 1.6;
+}
+.backup-section { margin-bottom: 20px; }
+.backup-section-label {
+  font-size: 10px; font-weight: 800; letter-spacing: 2px;
+  color: var(--text-3); text-transform: uppercase; margin-bottom: 10px;
+}
+.backup-card {
+  padding: 14px 16px; border-radius: 12px;
+  border: 1.5px solid var(--border); background: var(--bg);
+  margin-bottom: 8px;
+}
+.backup-card-title { font-size: 13.5px; font-weight: 700; color: var(--text-1); margin-bottom: 3px; }
+.backup-card-desc { font-size: 11.5px; color: var(--text-3); line-height: 1.55; }
+.backup-action-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.backup-info {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; border-radius: 10px;
+  background: #E3F2FD; border: 1px solid #90CAF9;
+  font-size: 12px; color: #1565C0; font-weight: 600; line-height: 1.5;
+  margin-bottom: 16px;
+}
+.backup-modal-close {
+  position: absolute; top: 18px; right: 20px;
+  font-size: 22px; color: var(--text-3); cursor: pointer; line-height: 1;
+}
+.backup-modal-close:hover { color: var(--text-1); }
+.backup-modal-wrap { position: relative; }
+textarea.backup-textarea {
+  width: 100%; height: 80px; font-size: 11px;
+  font-family: monospace; border: 1.5px solid var(--border);
+  border-radius: 8px; padding: 8px 10px; background: var(--bg);
+  color: var(--text-1); resize: none; outline: none; margin-top: 8px;
+}
+textarea.backup-textarea:focus { border-color: var(--accent); background: white; }
+.backup-status {
+  font-size: 12px; font-weight: 700; margin-top: 8px;
+  padding: 8px 12px; border-radius: 8px; display: none;
+}
+.backup-status.ok { background: #E8F5E9; color: #2E7D32; display: block; }
+.backup-status.err { background: #FFEBEE; color: #C62828; display: block; }
+
+/* Topbar backup btn */
+.topbar-backup-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 13px; border-radius: 10px;
+  border: 1.5px solid var(--border); background: white;
+  font-size: 12px; font-weight: 700; color: var(--text-2);
+  cursor: pointer; transition: all .15s;
+}
+.topbar-backup-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ─── SCROLLBAR ──────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 10px; }
+
+/* ─── MOBILE ─────────────────────────────────────────── */
+@media (max-width: 768px) {
+  :root { --sidebar-w: 0px; }
+  #sidebar { transform: translateX(-220px); transition: transform .25s; width: 220px; }
+  #sidebar.open { transform: translateX(0); }
+  #main { margin-left: 0; }
+  #content { padding: 20px 16px 48px; }
+  #topbar { padding: 0 16px; }
+  #mobile-toggle {
+    display: flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 8px;
+    background: var(--bg); border: 1px solid var(--border);
+    cursor: pointer; font-size: 16px;
+  }
+  #overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 99; }
+  #overlay.show { display: block; }
+}
+@media (min-width: 769px) { #mobile-toggle { display: none; } }
+</style>
+</head>
+<body>
+
+<!-- OVERLAY (mobile) -->
+<div id="overlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-tag">✦ Command Center ✦</div>
+    <div class="brand-name">Christina's<br>Roadmap</div>
+  </div>
+
+  <div class="sidebar-phase" id="sidebar-phase-block">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
+      <span id="sidebar-phase-emoji" style="font-size:18px">🌱</span>
+      <div>
+        <div class="phase-year" id="sidebar-phase-year">2026</div>
+        <div class="phase-label" id="sidebar-phase-label">Foundation</div>
+      </div>
+    </div>
+    <div class="phase-goals" id="sidebar-phase-goals"></div>
+  </div>
+
+  <div class="sidebar-section-label">Điều hướng</div>
+  <div class="nav-item active" onclick="setTab('today')" data-tab="today">
+    <span class="nav-icon">☀️</span> Hôm nay
+    <span class="nav-badge" id="badge-today" style="display:none"></span>
+  </div>
+  <div class="nav-item" onclick="setTab('habits')" data-tab="habits">
+    <span class="nav-icon">🔥</span> Thói quen
+    <span class="nav-badge" id="badge-habits" style="display:none"></span>
+  </div>
+  <div class="nav-item" onclick="setTab('week')" data-tab="week">
+    <span class="nav-icon">📋</span> Tuần này
+    <span class="nav-badge" id="badge-week" style="display:none"></span>
+  </div>
+  <div class="nav-item" onclick="setTab('goals')" data-tab="goals">
+    <span class="nav-icon">🎯</span> Mục tiêu
+  </div>
+  <div class="nav-item" onclick="setTab('journal')" data-tab="journal">
+    <span class="nav-icon">✍️</span> Nhật ký
+  </div>
+  <div class="nav-item" onclick="setTab('finance')" data-tab="finance">
+    <span class="nav-icon">💰</span> Tài chính
+  </div>
+  <div class="nav-item" onclick="setTab('plan')" data-tab="plan">
+    <span class="nav-icon">🗺</span> Kế hoạch
+  </div>
+  <div class="nav-item" onclick="setTab('overview')" data-tab="overview">
+    <span class="nav-icon">📊</span> Tổng quan
+  </div>
+
+  <div class="sidebar-date">
+    <div class="sidebar-date-label">HÔM NAY</div>
+    <div class="sidebar-date-val" id="sidebar-date"></div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button id="mobile-toggle" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-title" id="topbar-title">☀️ Hôm nay</div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-stat">🔥 <span id="topbar-streak">0</span></div>
+      <div class="topbar-stat">🍅 <span id="topbar-pomo">0</span></div>
+      <button class="topbar-backup-btn" onclick="openBackup()">💾 Backup</button>
+    </div>
+  </div>
+
+  <div id="content">
+    <!-- PLAN -->
+    <div id="tab-plan" class="section-gap tab-panel" style="display:none"></div>
+    <!-- TODAY -->
+    <div id="tab-today" class="section-gap tab-panel"></div>
+    <!-- HABITS -->
+    <div id="tab-habits" class="section-gap tab-panel" style="display:none"></div>
+    <!-- WEEK -->
+    <div id="tab-week" class="section-gap tab-panel" style="display:none"></div>
+    <!-- GOALS -->
+    <div id="tab-goals" class="section-gap tab-panel" style="display:none"></div>
+    <!-- JOURNAL -->
+    <div id="tab-journal" class="section-gap tab-panel" style="display:none"></div>
+    <!-- FINANCE -->
+    <div id="tab-finance" class="section-gap tab-panel" style="display:none"></div>
+    <!-- OVERVIEW -->
+    <div id="tab-overview" class="section-gap tab-panel" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+// ─── DATA ──────────────────────────────────────────────
+const PHASES = [
+  { year:"2026", label:"Foundation", emoji:"🌱", color:"#E8611A", light:"#FEF0E7", goals:["IELTS 7.0","Daily Journaling","Personal Branding"] },
+  { year:"2027", label:"Build & Prepare", emoji:"📚", color:"#388E3C", light:"#E8F5E9", goals:["IELTS 8.0","HSK 5","Chuẩn bị PhD","Healthy Lifestyle"] },
+  { year:"2028", label:"Acceleration", emoji:"🚀", color:"#E07B00", light:"#FFF8EE", goals:["Bắt đầu PhD","Viết sách chuyên khảo","SC Director"] },
+  { year:"2029", label:"Expansion", emoji:"🌏", color:"#1976D2", light:"#E3F2FD", goals:["Tiết kiệm 30%/tháng","Trip to China"] },
+  { year:"2030", label:"Achievement", emoji:"🌟", color:"#7B1FA2", light:"#F3E5F5", goals:["Family Life","YouTube Channel"] },
+];
+const DEFAULT_HABITS = [
+  {id:"h_journal",icon:"✍️",name:"Viết journal buổi sáng"},
+  {id:"h_listen",icon:"🎧",name:"IELTS Listening + Reading"},
+  {id:"h_speak",icon:"🗣️",name:"IELTS Speaking 30'"},
+  {id:"h_chinese",icon:"🀄",name:"Học tiếng Trung (HSK)"},
+  {id:"h_move",icon:"🏃",name:"Vận động 30 phút"},
+  {id:"h_read",icon:"📚",name:"Đọc sách / Academic"},
+];
+const DEFAULT_WEEK = [
+  {id:"w1",text:"Viết 3 bài Writing IELTS có feedback",done:false},
+  {id:"w2",text:"Đăng 2 bài LinkedIn về SCM/ESG",done:false},
+  {id:"w3",text:"Weekly review: nhìn lại tuần & điều chỉnh kế hoạch",done:false},
+  {id:"w4",text:"1 mock test IELTS đầy đủ",done:false},
+];
+const DEFAULT_GOALS = [
+  { id:"ielts8",icon:"🎓",title:"IELTS 8.0",target:"Đạt cuối 2027",year:"2027",
+    steps:[
+      {id:"i1",text:"Đạt nền tảng 7.0 (2026)",done:false},
+      {id:"i2",text:"Nâng Writing lên band 8 (task response + cohesion)",done:false},
+      {id:"i3",text:"Nâng Speaking lên band 8 (fluency + lexical)",done:false},
+      {id:"i4",text:"Mock test 8.0 ổn định 3 lần liên tiếp",done:false},
+      {id:"i5",text:"Thi thật & đạt 8.0",done:false},
+    ]},
+  { id:"hsk5",icon:"🀄",title:"HSK 5",target:"Đạt cuối 2027",year:"2027",
+    steps:[
+      {id:"k1",text:"Hoàn thành HSK 1–2 (nền tảng phát âm + ngữ pháp)",done:false},
+      {id:"k2",text:"Học 2.500 từ vựng HSK 3–4",done:false},
+      {id:"k3",text:"Luyện đọc + nghe HSK 5 mỗi ngày",done:false},
+      {id:"k4",text:"Thi thử HSK 5 đạt > 180/300",done:false},
+      {id:"k5",text:"Thi thật & nhận chứng chỉ HSK 5",done:false},
+    ]},
+  { id:"phd",icon:"🔬",title:"Bắt đầu PhD",target:"Nhập học 2028",year:"2028",
+    steps:[
+      {id:"p1",text:"Chuẩn bị đề cương nghiên cứu (research proposal)",done:false},
+      {id:"p2",text:"Tìm & chọn 3–5 trường phù hợp (SCM / ESG)",done:false},
+      {id:"p3",text:"Tìm & liên hệ giáo sư hướng dẫn tiềm năng",done:false},
+      {id:"p4",text:"Chuẩn bị học phí / săn học bổng",done:false},
+      {id:"p5",text:"Nộp hồ sơ + thư giới thiệu + phỏng vấn",done:false},
+      {id:"p6",text:"Nhận kết quả & nhập học 2028",done:false},
+    ]},
+  { id:"book",icon:"📖",title:"Sách chuyên khảo",target:"Hoàn thành bản thảo",year:"2028",
+    steps:[
+      {id:"b1",text:"Xác định chủ đề & độc giả mục tiêu",done:false},
+      {id:"b2",text:"Lập outline 10–15 chương + literature base",done:false},
+      {id:"b3",text:"Viết 1.000 từ/ngày — mỗi tuần 1 chương draft",done:false},
+      {id:"b4",text:"Hoàn thành bản thảo đầu tiên (first draft)",done:false},
+      {id:"b5",text:"Peer review + revise theo phản biện",done:false},
+      {id:"b6",text:"Liên hệ NXB học thuật / quyết định xuất bản",done:false},
+    ]},
+];
+const MOODS = [
+  {v:1,emoji:"😞",label:"Rất tệ",color:"#E57373"},
+  {v:2,emoji:"😕",label:"Mệt",color:"#FFB74D"},
+  {v:3,emoji:"😐",label:"Bình thường",color:"#FFD54F"},
+  {v:4,emoji:"🙂",label:"Tốt",color:"#AED581"},
+  {v:5,emoji:"😄",label:"Tuyệt vời",color:"#66BB6A"},
+];
+const POMO_PRESETS = [
+  {id:"p25",label:"Tập trung",min:25,kind:"focus",icon:"🎯"},
+  {id:"p50",label:"Viết sách",min:50,kind:"focus",icon:"📖"},
+  {id:"p30",label:"Speaking",min:30,kind:"focus",icon:"🗣️"},
+  {id:"p5",label:"Nghỉ ngắn",min:5,kind:"break",icon:"☕"},
+];
+const ICON_CHOICES = ["🎯","✍️","🎧","🗣️","🀄","🏃","📚","🧘","💧","🍎","💼","💰","🌙","☀️"];
+const DOW = ["Chủ Nhật","Thứ Hai","Thứ Ba","Thứ Tư","Thứ Năm","Thứ Sáu","Thứ Bảy"];
+const DOW_SHORT = ["CN","T2","T3","T4","T5","T6","T7"];
+const CAL_HEAD = ["T2","T3","T4","T5","T6","T7","CN"];
+
+// ─── HELPERS ───────────────────────────────────────────
+const pad = n => n<10?'0'+n:''+n;
+const dateStr = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const fmtVND = n => (Number(n)||0).toLocaleString('vi-VN')+' ₫';
+const parseNum = s => { const n=parseInt(String(s).replace(/[^\d]/g,''),10); return isNaN(n)?0:n; };
+const fmtMMSS = s => `${pad(Math.floor(s/60))}:${pad(s%60)}`;
+const phaseColor = yr => (PHASES.find(x=>x.year===yr)||PHASES[0]).color;
+const phaseLight = yr => (PHASES.find(x=>x.year===yr)||PHASES[0]).light;
+
+function formatDateVN(d) {
+  return `${DOW[d.getDay()]}, ${d.getDate()} tháng ${d.getMonth()+1}, ${d.getFullYear()}`;
+}
+function weekRangeLabel() {
+  const now=new Date(), day=now.getDay()===0?7:now.getDay();
+  const mon=new Date(now); mon.setDate(now.getDate()-(day-1));
+  const sun=new Date(mon); sun.setDate(mon.getDate()+6);
+  return `${mon.getDate()}/${mon.getMonth()+1} – ${sun.getDate()}/${sun.getMonth()+1}`;
+}
+function buildMonth(year,month) {
+  const dim=new Date(year,month+1,0).getDate();
+  const lead=(new Date(year,month,1).getDay()+6)%7;
+  const cells=[];
+  for(let i=0;i<lead;i++) cells.push(null);
+  for(let d=1;d<=dim;d++) cells.push(d);
+  return cells;
+}
+function last7(habitId,log) {
+  const arr=[];
+  for(let i=6;i>=0;i--) {
+    const d=new Date(); d.setDate(d.getDate()-i);
+    arr.push({key:dateStr(d),dow:d.getDay(),done:!!log[`${habitId}|${dateStr(d)}`],isToday:i===0});
+  }
+  return arr;
+}
+function calcStreak(habitId,log) {
+  const t=new Date(); let streak=0; let d=new Date(t);
+  if(!log[`${habitId}|${dateStr(t)}`]) d.setDate(d.getDate()-1);
+  while(log[`${habitId}|${dateStr(d)}`]) { streak++; d.setDate(d.getDate()-1); }
+  return streak;
+}
+function lastNMonths(n,base) {
+  const arr=[];
+  for(let i=n-1;i>=0;i--) {
+    const dd=new Date(base.getFullYear(),base.getMonth()-i,1);
+    arr.push({key:`${dd.getFullYear()}-${pad(dd.getMonth()+1)}`,label:`Th${dd.getMonth()+1}`});
+  }
+  return arr;
+}
+function beep() {
+  try {
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const o=ctx.createOscillator(),g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type='sine'; o.frequency.value=880; g.gain.value=0.08; o.start();
+    setTimeout(()=>{o.frequency.value=1100;},150);
+    setTimeout(()=>{o.stop();ctx.close();},320);
+  }catch(e){}
+}
+
+// ─── STATE ─────────────────────────────────────────────
+const now = new Date();
+const TODAY = dateStr(now);
+const YM = `${now.getFullYear()}-${pad(now.getMonth()+1)}`;
+const CUR_YEAR = String(now.getFullYear());
+const phase = PHASES.find(p=>p.year===CUR_YEAR)||PHASES[0];
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem('pcc:v2');
+    if(!raw) return null;
+    const s = JSON.parse(raw);
+    return {
+      habits: Array.isArray(s.habits)?s.habits:DEFAULT_HABITS,
+      habitLog: s.habitLog||{},
+      daily: s.daily||{},
+      weekTasks: Array.isArray(s.weekTasks)?s.weekTasks:DEFAULT_WEEK,
+      finance: s.finance||{income:0,rate:30,log:{}},
+      goals: Array.isArray(s.goals)&&s.goals.length?s.goals:DEFAULT_GOALS,
+    };
+  } catch(e){ return null; }
+}
+function initState() {
+  return {habits:DEFAULT_HABITS,habitLog:{},daily:{},weekTasks:DEFAULT_WEEK,
+          finance:{income:0,rate:30,log:{}},goals:DEFAULT_GOALS};
+}
+let S = loadState()||initState();
+let saveTimer = null;
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{ localStorage.setItem('pcc:v2',JSON.stringify(S)); }, 400);
+}
+function todayData() {
+  return S.daily[TODAY]||{topTasks:[],journal:{gratitude:['','',''],lesson:''},mood:0,pomodoros:0};
+}
+function setTodayData(fn) {
+  const d = todayData();
+  S.daily[TODAY] = fn(JSON.parse(JSON.stringify(d)));
+  save();
+}
+
+// Pomo state
+let pomo = { label:'Tập trung', icon:'🎯', kind:'focus', total:25*60, left:25*60, running:false, counted:false };
+let pomoInterval = null;
+
+// ─── ACCENT SETUP ───────────────────────────────────────
+document.documentElement.style.setProperty('--accent', phase.color);
+document.documentElement.style.setProperty('--accent-10', phase.light);
+
+// ─── RING SVG ───────────────────────────────────────────
+function ringHTML(pct, size, stroke, color, innerHTML, darkBg=false) {
+  const r=(size-stroke)/2, c=2*Math.PI*r;
+  const offset=c-Math.min(pct,100)/100*c;
+  return `<div class="ring-wrap" style="width:${size}px;height:${size}px;">
+    <svg width="${size}" height="${size}">
+      <circle cx="${size/2}" cy="${size/2}" r="${r}" stroke="${darkBg?'rgba(255,255,255,.1)':'#EEE8E0'}" stroke-width="${stroke}" fill="none"/>
+      <circle cx="${size/2}" cy="${size/2}" r="${r}" stroke="${color}" stroke-width="${stroke}" fill="none"
+        stroke-dasharray="${c}" stroke-dashoffset="${offset}" stroke-linecap="round"
+        transform="rotate(-90 ${size/2} ${size/2})"
+        style="transition:stroke-dashoffset .7s cubic-bezier(.4,0,.2,1)"/>
+    </svg>
+    <div class="ring-inner">${innerHTML}</div>
+  </div>`;
+}
+
+// ─── DERIVED STATS ──────────────────────────────────────
+function getStats() {
+  const td = todayData();
+  const habitsDone = S.habits.filter(h=>S.habitLog[`${h.id}|${TODAY}`]).length;
+  const habitsPct = S.habits.length?Math.round(habitsDone/S.habits.length*100):0;
+  const weekDone = S.weekTasks.filter(t=>t.done).length;
+  const weekPct = S.weekTasks.length?Math.round(weekDone/S.weekTasks.length*100):0;
+  const streaks = S.habits.map(h=>calcStreak(h.id,S.habitLog));
+  const longestStreak = streaks.length?Math.max(0,...streaks):0;
+  const journalCount = Object.values(S.daily).filter(d=>{
+    const j=d.journal; return j&&((j.gratitude||[]).some(g=>g&&g.trim())||(j.lesson&&j.lesson.trim()));
+  }).length;
+  const allSteps = S.goals.reduce((a,g)=>a+g.steps.length,0);
+  const doneSteps = S.goals.reduce((a,g)=>a+g.steps.filter(s=>s.done).length,0);
+  const monthlyTarget = Math.round((S.finance.income||0)*(S.finance.rate||0)/100);
+  const savedMonth = S.finance.log[YM]||0;
+  const totalSaved = Object.values(S.finance.log).reduce((a,b)=>a+(b||0),0);
+  const monthMoods = Object.entries(S.daily).filter(([k,d])=>k.startsWith(YM)&&d.mood).map(([,d])=>d.mood);
+  const avgMood = monthMoods.length?monthMoods.reduce((a,b)=>a+b,0)/monthMoods.length:0;
+  return { habitsDone, habitsPct, weekDone, weekPct, longestStreak, journalCount,
+           allSteps, doneSteps, monthlyTarget, savedMonth, totalSaved, avgMood,
+           tasksDone:(td.topTasks||[]).filter(t=>t.done).length,
+           tasksTotal:(td.topTasks||[]).length,
+           pomodoros: td.pomodoros||0 };
+}
+
+// ─── NAVIGATION ─────────────────────────────────────────
+let currentTab = 'today';
+const TAB_TITLES = { today:'☀️ Hôm nay', habits:'🔥 Thói quen', week:'📋 Tuần này', plan:'🗺 Kế hoạch 5 năm',
+                     goals:'🎯 Mục tiêu', journal:'✍️ Nhật ký', finance:'💰 Tài chính', overview:'📊 Tổng quan' };
+
+function setTab(tab) {
+  document.querySelectorAll('.tab-panel').forEach(p=>p.style.display='none');
+  document.getElementById(`tab-${tab}`).style.display='flex';
+  document.querySelectorAll('.nav-item').forEach(el=>{
+    el.classList.toggle('active', el.dataset.tab===tab);
+  });
+  document.getElementById('topbar-title').textContent = TAB_TITLES[tab]||tab;
+  currentTab = tab;
+  renderTab(tab);
+  closeSidebar();
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+// ─── RENDER SIDEBAR ─────────────────────────────────────
+function renderSidebar() {
+  const p = phase;
+  document.getElementById('sidebar-phase-emoji').textContent = p.emoji;
+  document.getElementById('sidebar-phase-year').textContent = p.year;
+  document.getElementById('sidebar-phase-year').style.color = p.color;
+  document.getElementById('sidebar-phase-label').textContent = p.label;
+  document.getElementById('sidebar-phase-goals').innerHTML =
+    p.goals.map(g=>`<div class="phase-goal-item">${g}</div>`).join('');
+  document.getElementById('sidebar-date').textContent = formatDateVN(now);
+
+  // Badges
+  const st = getStats();
+  const badgeHabits = document.getElementById('badge-habits');
+  if(st.habitsDone>0) { badgeHabits.textContent=`${st.habitsDone}/${S.habits.length}`; badgeHabits.style.display=''; }
+  else badgeHabits.style.display='none';
+
+  const badgeWeek = document.getElementById('badge-week');
+  if(st.weekDone>0) { badgeWeek.textContent=`${st.weekDone}/${S.weekTasks.length}`; badgeWeek.style.display=''; }
+  else badgeWeek.style.display='none';
+
+  const badgeToday = document.getElementById('badge-today');
+  if(st.tasksDone>0) { badgeToday.textContent=`${st.tasksDone}/${st.tasksTotal}`; badgeToday.style.display=''; }
+  else badgeToday.style.display='none';
+
+  document.getElementById('topbar-streak').textContent = st.longestStreak+'🔥';
+  document.getElementById('topbar-pomo').textContent = st.pomodoros;
+}
+
+// ─── TAB RENDERS ────────────────────────────────────────
+function renderTab(tab) {
+  const el = document.getElementById(`tab-${tab}`);
+  if(tab==='today') renderToday(el);
+  else if(tab==='habits') renderHabits(el);
+  else if(tab==='week') renderWeek(el);
+  else if(tab==='goals') renderGoals(el);
+  else if(tab==='journal') renderJournal(el);
+  else if(tab==='finance') renderFinance(el);
+  else if(tab==='overview') renderOverview(el);
+  else if(tab==='plan') renderPlan(el);
+  renderSidebar();
+}
+
+// ─── TODAY ──────────────────────────────────────────────
+function renderToday(el) {
+  const td = todayData();
+  const st = getStats();
+  const hour = now.getHours();
+  const greeting = hour<11?'Chào buổi sáng':hour<14?'Chào buổi trưa':hour<18?'Chào buổi chiều':'Chào buổi tối';
+
+  el.innerHTML = `
+  <!-- Hero -->
+  <div class="hero-banner">
+    <div style="flex:1;min-width:200px">
+      <div class="hero-greeting">${greeting}, Christina 👋</div>
+      <div class="hero-title">Hôm nay bạn muốn tiến gần hơn điều gì?</div>
+      <div class="hero-goals">${phase.emoji} ${phase.year} · ${phase.label} — ${phase.goals.join(' · ')}</div>
+    </div>
+    ${ringHTML(st.habitsPct,110,10,phase.color,
+      `<div class="ring-pct" style="color:white">${st.habitsPct}%</div>
+       <div class="ring-label" style="color:rgba(255,255,255,.5)">HÔM NAY</div>`, true)}
+  </div>
+
+  <!-- Top Tasks -->
+  <div class="card">
+    <div class="label">🎯 Top ưu tiên hôm nay${st.tasksTotal>0?` <span class="label-accent">· ${st.tasksDone}/${st.tasksTotal}</span>`:''}</div>
+    <div class="task-list" id="today-task-list"></div>
+    <div class="input-row">
+      <input class="input-field" id="today-task-input" placeholder="Thêm một việc quan trọng…" onkeydown="if(event.key==='Enter')addTodayTask()">
+      <button class="btn btn-dark" onclick="addTodayTask()">Thêm</button>
+    </div>
+  </div>
+
+  <!-- Pomodoro -->
+  <div class="card">
+    <div class="label">⏱️ Pomodoro · Tập trung sâu</div>
+    <div class="pomo-presets" id="pomo-presets"></div>
+    <div class="pomo-center">
+      <div id="pomo-ring"></div>
+      <div class="pomo-controls">
+        <button class="btn btn-accent" id="pomo-main-btn" onclick="pomoMain()" style="font-size:14px;padding:13px 22px"></button>
+        <button class="btn btn-outline" onclick="pomoReset()">Đặt lại</button>
+        <div class="pomo-count">🍅 <span id="pomo-count-val">${td.pomodoros||0}</span> phiên hôm nay</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Habits Quick -->
+  <div class="card">
+    <div class="label">🔥 Thói quen hôm nay <span class="label-accent">· ${st.habitsDone}/${S.habits.length}</span></div>
+    <div class="habit-chips" id="today-habits"></div>
+  </div>
+
+  <!-- Mood -->
+  <div class="card">
+    <div class="label">😊 Tâm trạng hôm nay</div>
+    <div class="mood-row" id="today-mood"></div>
+  </div>
+
+  <!-- Journal CTA -->
+  <div class="card" onclick="setTab('journal')" style="cursor:pointer;background:linear-gradient(100deg,#FFF8EE,#FEF0E7);border-color:color-mix(in srgb,var(--accent) 25%,transparent);display:flex;align-items:center;justify-content:space-between;gap:14px">
+    <div style="display:flex;align-items:center;gap:14px">
+      <span style="font-size:26px">✍️</span>
+      <div>
+        <div style="font-size:14.5px;font-weight:800;color:var(--text-1)">Viết nhật ký hôm nay</div>
+        <div style="font-size:12px;color:#8a7a68;font-weight:500;margin-top:2px">3 điều biết ơn + 1 bài học · ${st.journalCount}/365 ngày năm nay</div>
+      </div>
+    </div>
+    <span style="font-size:20px;color:var(--accent);font-weight:800">→</span>
+  </div>
+  `;
+  renderTodayTasks();
+  renderPomoPresets();
+  renderPomoRing();
+  renderTodayHabits();
+  renderTodayMood();
+}
+
+function renderTodayTasks() {
+  const td = todayData();
+  const el = document.getElementById('today-task-list');
+  if(!el) return;
+  const tasks = td.topTasks||[];
+  if(tasks.length===0) { el.innerHTML=`<div class="empty-state">Chưa có việc nào. Thêm 1–3 việc quan trọng nhất bên dưới.</div>`; return; }
+  el.innerHTML = tasks.map(t=>`
+    <div class="task-row${t.done?' done':''}">
+      <div class="task-check${t.done?' checked':''}" onclick="toggleTodayTask('${t.id}')">${t.done?'✓':''}</div>
+      <div class="task-text${t.done?' done':''}">${t.text}</div>
+      <span class="task-del" onclick="delTodayTask('${t.id}')">×</span>
+    </div>`).join('');
+}
+function addTodayTask() {
+  const inp = document.getElementById('today-task-input');
+  const text = inp.value.trim(); if(!text) return;
+  setTodayData(d=>{ (d.topTasks=d.topTasks||[]).push({id:uid(),text,done:false}); return d; });
+  inp.value=''; renderTab(currentTab);
+}
+function toggleTodayTask(id) {
+  setTodayData(d=>{ d.topTasks=(d.topTasks||[]).map(t=>t.id===id?{...t,done:!t.done}:t); return d; });
+  renderTodayTasks(); renderSidebar();
+}
+function delTodayTask(id) {
+  setTodayData(d=>{ d.topTasks=(d.topTasks||[]).filter(t=>t.id!==id); return d; });
+  renderTodayTasks(); renderSidebar();
+}
+
+function renderTodayHabits() {
+  const el = document.getElementById('today-habits'); if(!el) return;
+  el.innerHTML = S.habits.map(h=>{
+    const done = !!S.habitLog[`${h.id}|${TODAY}`];
+    return `<div class="habit-chip${done?' done':''}" onclick="toggleHabit('${h.id}')">
+      <span>${h.icon}</span><span>${h.name}</span><span style="opacity:${done?1:.3}">${done?'✓':'+'}</span>
+    </div>`;
+  }).join('');
+}
+function renderTodayMood() {
+  const el = document.getElementById('today-mood'); if(!el) return;
+  const td = todayData();
+  el.innerHTML = MOODS.map(m=>{
+    const sel = td.mood===m.v;
+    return `<div class="mood-btn${sel?' sel':''}" onclick="setMood(${m.v})" style="--mood-color:${m.color}">
+      <div class="mood-emoji" style="${sel?'':'filter:grayscale(.4);opacity:.7'}">${m.emoji}</div>
+      <div class="mood-label">${m.label}</div>
+    </div>`;
+  }).join('');
+}
+function setMood(v) {
+  setTodayData(d=>{ d.mood=d.mood===v?0:v; return d; });
+  renderTodayMood();
+}
+
+// Pomo
+function renderPomoPresets() {
+  const el = document.getElementById('pomo-presets'); if(!el) return;
+  el.innerHTML = POMO_PRESETS.map(p=>{
+    const sel = pomo.label===p.label&&pomo.total===p.min*60;
+    return `<div class="pomo-preset${sel?' sel':''}" onclick="pickPomo('${p.id}')">
+      <span>${p.icon}</span>${p.label} ${p.min}'</div>`;
+  }).join('');
+}
+function renderPomoRing() {
+  const el = document.getElementById('pomo-ring'); if(!el) return;
+  const pct = pomo.total?(1-pomo.left/pomo.total)*100:0;
+  const col = pomo.kind==='focus'?phase.color:'#388E3C';
+  el.innerHTML = ringHTML(pct,150,12,col,
+    `<div style="font-size:32px;font-weight:800;color:var(--text-1);font-variant-numeric:tabular-nums">${pomo.left===0?'✓':fmtMMSS(pomo.left)}</div>
+     <div style="font-size:9.5px;color:var(--text-3);font-weight:700;letter-spacing:1px;margin-top:2px">${pomo.left===0?'HOÀN THÀNH':pomo.icon+' '+pomo.label.toUpperCase()}</div>`);
+  const btn = document.getElementById('pomo-main-btn'); if(!btn) return;
+  if(pomo.left===0) { btn.textContent='↻ Phiên mới'; btn.className='btn btn-accent'; }
+  else if(pomo.running) { btn.textContent='⏸ Tạm dừng'; btn.style.cssText='background:#FFF1E8;color:var(--accent);border:none;padding:13px 22px;font-size:14px'; }
+  else { btn.textContent='▶ Bắt đầu'; btn.className='btn btn-accent'; btn.style.cssText=''; }
+}
+function pickPomo(id) {
+  const p = POMO_PRESETS.find(x=>x.id===id); if(!p) return;
+  clearInterval(pomoInterval); pomoInterval=null;
+  pomo = {label:p.label,icon:p.icon,kind:p.kind,total:p.min*60,left:p.min*60,running:false,counted:false};
+  renderPomoPresets(); renderPomoRing();
+}
+function pomoMain() {
+  if(pomo.left===0) { pomo.left=pomo.total; pomo.running=false; pomo.counted=false; renderPomoRing(); return; }
+  pomo.running=!pomo.running;
+  if(pomo.running) {
+    pomoInterval = setInterval(()=>{
+      pomo.left--;
+      if(pomo.left<=0) {
+        pomo.left=0; pomo.running=false; clearInterval(pomoInterval);
+        if(!pomo.counted&&pomo.kind==='focus') {
+          setTodayData(d=>{ d.pomodoros=(d.pomodoros||0)+1; return d; });
+          const cnt=document.getElementById('pomo-count-val');
+          if(cnt) cnt.textContent=todayData().pomodoros||0;
+          document.getElementById('topbar-pomo').textContent=todayData().pomodoros||0;
+        }
+        pomo.counted=true; beep();
+      }
+      renderPomoRing();
+    },1000);
+  } else { clearInterval(pomoInterval); }
+  renderPomoRing();
+}
+function pomoReset() {
+  clearInterval(pomoInterval); pomoInterval=null;
+  pomo.left=pomo.total; pomo.running=false; pomo.counted=false; renderPomoRing();
+}
+
+// Habit toggle (global)
+function toggleHabit(id) {
+  const key=`${id}|${TODAY}`;
+  if(S.habitLog[key]) delete S.habitLog[key]; else S.habitLog[key]=true;
+  save(); renderTab(currentTab);
+}
+
+// ─── HABITS ─────────────────────────────────────────────
+let newHabitIcon = '🎯';
+function renderHabits(el) {
+  const st = getStats();
+  el.innerHTML = `
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <div class="card" style="flex:1;min-width:130px;text-align:center">
+      <div style="font-size:28px;font-weight:800;color:var(--accent)">${st.longestStreak}🔥</div>
+      <div style="font-size:11px;color:var(--text-3);font-weight:600;margin-top:2px">Chuỗi dài nhất</div>
+    </div>
+    <div class="card" style="flex:1;min-width:130px;text-align:center">
+      <div style="font-size:28px;font-weight:800;color:var(--text-1)">${st.habitsDone}/${S.habits.length}</div>
+      <div style="font-size:11px;color:var(--text-3);font-weight:600;margin-top:2px">Hoàn thành hôm nay</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="label">Thói quen của bạn</div>
+    <div id="habits-list" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+  <div class="card">
+    <div class="label">+ Thêm thói quen mới</div>
+    <div class="icon-picker" id="icon-picker"></div>
+    <div class="input-row">
+      <input class="input-field" id="new-habit-input" placeholder="Tên thói quen…" onkeydown="if(event.key==='Enter')addHabit()">
+      <button class="btn btn-dark" onclick="addHabit()">Thêm</button>
+    </div>
+  </div>`;
+  renderHabitsList();
+  renderIconPicker();
+}
+function renderHabitsList() {
+  const el = document.getElementById('habits-list'); if(!el) return;
+  el.innerHTML = S.habits.map(h=>{
+    const streak=calcStreak(h.id,S.habitLog);
+    const week=last7(h.id,S.habitLog);
+    const done=!!S.habitLog[`${h.id}|${TODAY}`];
+    return `<div class="habit-row">
+      <div class="habit-icon-box">${h.icon}</div>
+      <div class="habit-meta">
+        <div class="habit-name">${h.name}</div>
+        <div class="habit-streak ${streak>0?'active':'inactive'}">${streak>0?`🔥 ${streak} ngày liên tiếp`:'Bắt đầu chuỗi hôm nay!'}</div>
+      </div>
+      <div class="week-dots">
+        ${week.map(d=>`<div class="week-dot">
+          <div class="week-dot-sq${d.done?' done':''}${d.isToday?' today':''}">${d.done?'✓':''}</div>
+          <div class="week-dot-label">${DOW_SHORT[d.dow]}</div>
+        </div>`).join('')}
+      </div>
+      <button class="btn ${done?'btn-accent':'btn-outline'}" onclick="toggleHabitAndRender('${h.id}')">${done?'✓ Xong':'Đánh dấu'}</button>
+      <span class="task-del" style="opacity:.5" onclick="delHabit('${h.id}')">×</span>
+    </div>`;
+  }).join('');
+}
+function renderIconPicker() {
+  const el = document.getElementById('icon-picker'); if(!el) return;
+  el.innerHTML = ICON_CHOICES.map(ic=>`
+    <div class="icon-opt${ic===newHabitIcon?' sel':''}" onclick="setHabitIcon('${ic}')">${ic}</div>`).join('');
+}
+function setHabitIcon(ic) { newHabitIcon=ic; renderIconPicker(); }
+function toggleHabitAndRender(id) { toggleHabit(id); renderHabitsList(); }
+function addHabit() {
+  const inp=document.getElementById('new-habit-input');
+  const name=inp.value.trim(); if(!name) return;
+  S.habits.push({id:uid(),icon:newHabitIcon,name}); save();
+  inp.value=''; renderHabitsList(); renderSidebar();
+}
+function delHabit(id) {
+  S.habits=S.habits.filter(h=>h.id!==id); save(); renderHabitsList(); renderSidebar();
+}
+
+// ─── WEEK ────────────────────────────────────────────────
+function renderWeek(el) {
+  const st = getStats();
+  el.innerHTML = `
+  <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+    <div>
+      <div style="font-size:11px;font-weight:800;letter-spacing:2px;color:var(--accent);text-transform:uppercase">📋 Tuần này · ${weekRangeLabel()}</div>
+      <div style="font-size:19px;font-weight:800;color:var(--text-1);margin-top:4px">${st.weekDone}/${S.weekTasks.length} việc hoàn thành</div>
+    </div>
+    <div style="flex:1;min-width:160px;max-width:300px">
+      <div class="progress-track">
+        <div class="progress-fill" style="width:${st.weekPct}%;background:linear-gradient(to right,var(--accent),#8FC9A0)"></div>
+      </div>
+      <div style="text-align:right;font-size:12px;font-weight:700;color:var(--accent);margin-top:5px">${st.weekPct}%</div>
+    </div>
+  </div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="label" style="margin-bottom:0">Việc cần làm — ${phase.year} · ${phase.label}</div>
+      <button class="btn btn-ghost" onclick="resetWeek()">↻ Đặt lại tuần</button>
+    </div>
+    <div class="task-list" id="week-task-list"></div>
+    <div class="input-row">
+      <input class="input-field" id="week-task-input" placeholder="Thêm việc cho tuần này…" onkeydown="if(event.key==='Enter')addWeekTask()">
+      <button class="btn btn-dark" onclick="addWeekTask()">Thêm</button>
+    </div>
+  </div>`;
+  renderWeekTasks();
+}
+function renderWeekTasks() {
+  const el=document.getElementById('week-task-list'); if(!el) return;
+  if(S.weekTasks.length===0){el.innerHTML='<div class="empty-state">Chưa có việc nào cho tuần này.</div>';return;}
+  el.innerHTML = S.weekTasks.map(t=>`
+    <div class="task-row${t.done?' done':''}">
+      <div class="task-check${t.done?' checked':''}" onclick="toggleWeekTask('${t.id}')">${t.done?'✓':''}</div>
+      <div class="task-text${t.done?' done':''}">${t.text}</div>
+      <span class="task-del" onclick="delWeekTask('${t.id}')">×</span>
+    </div>`).join('');
+}
+function addWeekTask() {
+  const inp=document.getElementById('week-task-input');
+  const text=inp.value.trim(); if(!text) return;
+  S.weekTasks.push({id:uid(),text,done:false}); save();
+  inp.value=''; renderWeekTasks(); renderSidebar();
+}
+function toggleWeekTask(id) {
+  S.weekTasks=S.weekTasks.map(t=>t.id===id?{...t,done:!t.done}:t); save(); renderWeekTasks(); renderSidebar();
+}
+function delWeekTask(id) {
+  S.weekTasks=S.weekTasks.filter(t=>t.id!==id); save(); renderWeekTasks(); renderSidebar();
+}
+function resetWeek() {
+  S.weekTasks=S.weekTasks.map(t=>({...t,done:false})); save(); renderWeekTasks(); renderSidebar();
+}
+
+// ─── GOALS ──────────────────────────────────────────────
+function renderGoals(el) {
+  const st=getStats();
+  const overallPct=st.allSteps?Math.round(st.doneSteps/st.allSteps*100):0;
+  el.innerHTML = `
+  <div class="card-dark" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+    <div>
+      <div style="font-size:10px;font-weight:800;letter-spacing:2.5px;color:var(--accent);text-transform:uppercase">🎯 Mục tiêu lớn</div>
+      <div style="font-size:19px;font-weight:800;color:white;margin-top:4px">${st.doneSteps}/${st.allSteps} cột mốc đã chinh phục</div>
+    </div>
+    ${ringHTML(overallPct,92,9,phase.color,
+      `<div class="ring-pct" style="color:white">${overallPct}%</div>`,true)}
+  </div>
+  ${S.goals.map(g=>{
+    const total=g.steps.length, done=g.steps.filter(s=>s.done).length;
+    const pct=total?Math.round(done/total*100):0, col=phaseColor(g.year), light=phaseLight(g.year);
+    return `<div class="goal-card" style="--accent:${col};border-left-color:${col}">
+      <div class="goal-header">
+        <div class="goal-icon-box" style="background:${col}1c">${g.icon}</div>
+        <div style="flex:1;min-width:120px">
+          <div class="goal-title">${g.title}</div>
+          <div class="goal-tag" style="color:${col};background:${col}1a">🗓 ${g.year} · ${g.target}</div>
+        </div>
+        <div class="goal-pct-box">
+          <div class="goal-pct-num" style="color:${col}">${pct}%</div>
+          <div class="goal-pct-sub">${done}/${total} bước</div>
+        </div>
+      </div>
+      <div class="progress-track" style="margin-bottom:14px">
+        <div class="progress-fill" style="width:${pct}%;background:${col}"></div>
+      </div>
+      <div class="goal-steps">
+        ${g.steps.map((s,i)=>`
+          <div class="step-row${s.done?` style="background:${col}12;border-color:${col}44"`:''}">
+            <div class="step-check${s.done?' checked':''}" onclick="toggleGoalStep('${g.id}','${s.id}')" style="${s.done?`background:${col};border-color:${col}`:''}">${s.done?'✓':i+1}</div>
+            <div class="step-text${s.done?' done':''}">${s.text}</div>
+            <span class="step-del" onclick="delGoalStep('${g.id}','${s.id}')">×</span>
+          </div>`).join('')}
+      </div>
+      <div class="input-row">
+        <input class="input-field" id="goal-inp-${g.id}" placeholder="Thêm bước cho mục tiêu này…" style="font-size:13px" onkeydown="if(event.key==='Enter')addGoalStep('${g.id}')">
+        <button class="btn" onclick="addGoalStep('${g.id}')" style="border:1.5px solid ${col};color:${col};background:white;padding:9px 14px;font-size:13px">+ Bước</button>
+      </div>
+    </div>`;
+  }).join('')}`;
+}
+function toggleGoalStep(gid,sid) {
+  S.goals=S.goals.map(g=>g.id===gid?{...g,steps:g.steps.map(s=>s.id===sid?{...s,done:!s.done}:s)}:g);
+  save(); renderTab('goals');
+}
+function addGoalStep(gid) {
+  const inp=document.getElementById(`goal-inp-${gid}`);
+  const text=(inp&&inp.value||'').trim(); if(!text) return;
+  S.goals=S.goals.map(g=>g.id===gid?{...g,steps:[...g.steps,{id:uid(),text,done:false}]}:g);
+  save(); inp.value=''; renderTab('goals');
+}
+function delGoalStep(gid,sid) {
+  S.goals=S.goals.map(g=>g.id===gid?{...g,steps:g.steps.filter(s=>s.id!==sid)}:g);
+  save(); renderTab('goals');
+}
+
+// ─── JOURNAL ────────────────────────────────────────────
+let showJournalHistory = false;
+function renderJournal(el) {
+  const td=todayData(); const st=getStats();
+  const j=td.journal||{gratitude:['','',''],lesson:''};
+  const grat=j.gratitude||['','',''];
+  const monthMoods=Object.entries(S.daily).filter(([k,d])=>k.startsWith(YM)&&d.mood).map(([,d])=>d.mood);
+  const avgMood=monthMoods.length?monthMoods.reduce((a,b)=>a+b,0)/monthMoods.length:0;
+  const avgMoodObj=MOODS.find(m=>m.v===Math.round(avgMood))||null;
+  const cells=buildMonth(now.getFullYear(),now.getMonth());
+  const pastEntries=Object.entries(S.daily)
+    .filter(([k,d])=>k!==TODAY&&d.journal&&((d.journal.gratitude||[]).some(g=>g&&g.trim())||(d.journal.lesson&&d.journal.lesson.trim())))
+    .sort((a,b)=>b[0].localeCompare(a[0]));
+
+  el.innerHTML = `
+  <!-- Today Journal -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:10px;font-weight:800;letter-spacing:2.5px;color:var(--accent);text-transform:uppercase">✍️ Nhật ký · ${formatDateVN(now)}</div>
+        <div style="font-size:17px;font-weight:800;color:var(--text-1);margin-top:3px">Hôm nay của bạn thế nào?</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:20px;font-weight:800;color:var(--accent)">${st.journalCount}<span style="font-size:12px;color:var(--text-4)"> / 365</span></div>
+        <div style="font-size:10px;color:var(--text-3);font-weight:600">entries năm nay</div>
+      </div>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--text-2);margin-bottom:9px">🙏 3 điều biết ơn hôm nay</div>
+    ${[0,1,2].map(i=>`
+      <div class="grat-row">
+        <div class="grat-num">${i+1}</div>
+        <input class="input-field" value="${(grat[i]||'').replace(/"/g,'&quot;')}" placeholder="Điều biết ơn thứ ${i+1}…" oninput="setGratitude(${i},this.value)">
+      </div>`).join('')}
+    <div style="font-size:12px;font-weight:700;color:var(--text-2);margin:14px 0 8px">💡 1 bài học / suy ngẫm trong ngày</div>
+    <textarea rows="4" class="input-field" style="width:100%;line-height:1.65" placeholder="Hôm nay mình học được gì?…" oninput="setLesson(this.value)">${(j.lesson||'').replace(/</g,'&lt;')}</textarea>
+    <div class="journal-note">✓ Tự động lưu khi bạn gõ. Cuối năm sẽ thành "Annual Letter to Self".</div>
+  </div>
+
+  <!-- Mood Calendar -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <div class="label" style="margin-bottom:0">📈 Tâm trạng · Tháng ${now.getMonth()+1}</div>
+      ${avgMoodObj?`<div style="display:flex;align-items:center;gap:8px;background:${avgMoodObj.color}22;padding:6px 14px;border-radius:30px">
+        <span style="font-size:17px">${avgMoodObj.emoji}</span>
+        <span style="font-size:12px;font-weight:700;color:var(--text-1)">TB ${avgMood.toFixed(1)} · ${avgMoodObj.label}</span>
+      </div>`:''}
+    </div>
+    ${monthMoods.length===0?`<div class="empty-state" style="margin-bottom:12px">Chưa ghi tâm trạng nào tháng này. Đánh dấu mỗi ngày ở tab Hôm nay 🌈</div>`:''}
+    <div class="cal-grid">
+      ${CAL_HEAD.map(h=>`<div class="cal-head">${h}</div>`).join('')}
+      ${cells.map((d,i)=>{
+        if(d===null) return `<div key="${i}"></div>`;
+        const key=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(d)}`;
+        const md=S.daily[key]&&S.daily[key].mood;
+        const mObj=md?MOODS.find(m=>m.v===md):null;
+        const isTd=key===TODAY;
+        return `<div class="cal-day${isTd?' today':''}${mObj?' has-mood':''}" title="${d}${mObj?' · '+mObj.label:''}" style="${mObj?`background:${mObj.color}`:''}${isTd&&!mObj?';border-color:var(--text-1)':''}">${d}</div>`;
+      }).join('')}
+    </div>
+    <div class="mood-legend">
+      ${MOODS.map(m=>`<div class="mood-legend-item"><div class="mood-legend-dot" style="background:${m.color}"></div><span class="mood-legend-label">${m.label}</span></div>`).join('')}
+    </div>
+  </div>
+
+  <!-- Journal History -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleJournalHistory()">
+      <div class="label" style="margin-bottom:0">📖 Nhật ký đã viết (${pastEntries.length})</div>
+      <span style="font-size:13px;color:var(--accent);font-weight:700" id="journal-history-toggle">${showJournalHistory?'Ẩn ▲':'Xem ▼'}</span>
+    </div>
+    <div id="journal-history-list" style="${showJournalHistory?'':'display:none'}"></div>
+  </div>`;
+
+  if(showJournalHistory) renderJournalHistory(pastEntries);
+}
+function setGratitude(i,val) {
+  setTodayData(d=>{ const g=[...((d.journal&&d.journal.gratitude)||['','',''])]; g[i]=val; d.journal={...(d.journal||{}),gratitude:g,lesson:(d.journal&&d.journal.lesson)||''}; return d; });
+}
+function setLesson(val) {
+  setTodayData(d=>{ d.journal={gratitude:(d.journal&&d.journal.gratitude)||['','',''],lesson:val}; return d; });
+}
+function toggleJournalHistory() {
+  showJournalHistory=!showJournalHistory;
+  const el=document.getElementById('journal-history-list');
+  const tog=document.getElementById('journal-history-toggle');
+  if(el) el.style.display=showJournalHistory?'':'none';
+  if(tog) tog.textContent=showJournalHistory?'Ẩn ▲':'Xem ▼';
+  if(showJournalHistory) {
+    const past=Object.entries(S.daily)
+      .filter(([k,d])=>k!==TODAY&&d.journal&&((d.journal.gratitude||[]).some(g=>g&&g.trim())||(d.journal.lesson&&d.journal.lesson.trim())))
+      .sort((a,b)=>b[0].localeCompare(a[0]));
+    renderJournalHistory(past);
+  }
+}
+function renderJournalHistory(entries) {
+  const el=document.getElementById('journal-history-list'); if(!el) return;
+  el.innerHTML=`<div class="journal-history" style="margin-top:14px">${entries.length===0?'<div class="empty-state">Chưa có entry nào. Hành trình bắt đầu từ hôm nay ✨</div>':
+    entries.map(([k,d])=>{
+      const [y,m,dd]=k.split('-'), mObj=d.mood?MOODS.find(x=>x.v===d.mood):null;
+      return `<div class="journal-entry">
+        <div class="journal-entry-header">
+          <div class="journal-entry-date">${dd}/${m}/${y}</div>
+          ${mObj?`<span style="font-size:16px">${mObj.emoji}</span>`:''}
+        </div>
+        ${(d.journal.gratitude||[]).filter(g=>g&&g.trim()).map(g=>`<div class="journal-entry-grat">🙏 ${g}</div>`).join('')}
+        ${d.journal.lesson&&d.journal.lesson.trim()?`<div class="journal-entry-lesson">💡 ${d.journal.lesson}</div>`:''}
+      </div>`;
+    }).join('')}</div>`;
+}
+
+// ─── FINANCE ────────────────────────────────────────────
+function renderFinance(el) {
+  const st=getStats();
+  el.innerHTML = `
+  <div class="card-dark" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+    <div>
+      <div style="font-size:10px;font-weight:800;letter-spacing:2px;color:#64B5F6;text-transform:uppercase">💰 Chuẩn bị 2029 · Invest & Save</div>
+      <div style="font-size:21px;font-weight:800;color:white;margin-top:4px">${fmtVND(st.totalSaved)}</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.45);margin-top:2px">Tổng đã tích lũy</div>
+    </div>
+    ${ringHTML(st.monthlyTarget?Math.min(100,Math.round(st.savedMonth/st.monthlyTarget*100)):0,
+      96,9,'#64B5F6',
+      `<div class="ring-pct" style="color:white">${st.monthlyTarget?Math.min(100,Math.round(st.savedMonth/st.monthlyTarget*100)):0}%</div>
+       <div class="ring-label" style="color:rgba(255,255,255,.4)">THÁNG NÀY</div>`, true)}
+  </div>
+
+  <div class="card">
+    <div class="label">⚙️ Thiết lập mục tiêu tiết kiệm</div>
+    <div class="finance-grid">
+      <div class="finance-field">
+        <div class="field-label">Thu nhập / tháng (VND)</div>
+        <input class="input-field" style="width:100%" inputmode="numeric" placeholder="VD: 30000000" value="${S.finance.income||''}" oninput="setIncome(this.value)">
+        <div class="field-note">= ${fmtVND(S.finance.income)}</div>
+      </div>
+      <div class="finance-field" style="max-width:150px">
+        <div class="field-label">Tỷ lệ tiết kiệm</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input class="input-field" style="width:70px" inputmode="numeric" value="${S.finance.rate||''}" oninput="setRate(this.value)">
+          <span style="font-size:16px;font-weight:800;color:var(--accent)">%</span>
+        </div>
+        <div class="field-note">Khuyến nghị: 30%</div>
+      </div>
+    </div>
+    <div class="finance-target">
+      <span class="finance-target-label">🎯 Mục tiêu tiết kiệm / tháng</span>
+      <span class="finance-target-val">${fmtVND(st.monthlyTarget)}</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">📅 Tháng ${now.getMonth()+1}/${now.getFullYear()} — đã tiết kiệm</div>
+    <input class="input-field" style="width:100%;font-size:18px;font-weight:700" inputmode="numeric" placeholder="Nhập số tiền đã tiết kiệm…" value="${st.savedMonth||''}" oninput="setMonthSaved(this.value)">
+    <div class="progress-track" style="margin-top:13px;height:10px">
+      <div class="progress-fill" style="width:${st.monthlyTarget?Math.min(100,Math.round(st.savedMonth/st.monthlyTarget*100)):0}%;background:${st.savedMonth>=st.monthlyTarget&&st.monthlyTarget>0?'#66BB6A':'#64B5F6'}"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:8px">
+      <span style="font-size:12px;color:var(--text-2);font-weight:600">${fmtVND(st.savedMonth)} / ${fmtVND(st.monthlyTarget)}</span>
+      <span style="font-size:12px;font-weight:800;color:${st.savedMonth>=st.monthlyTarget&&st.monthlyTarget>0?'#388E3C':'var(--accent)'}">
+        ${st.monthlyTarget===0?'Hãy nhập thu nhập trước':st.savedMonth>=st.monthlyTarget?'✓ Đạt mục tiêu!':'Còn '+fmtVND(Math.max(0,st.monthlyTarget-st.savedMonth))}
+      </span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">📊 6 tháng gần nhất</div>
+    <div class="bar-chart">
+      ${lastNMonths(6,now).map(m=>{
+        const saved=S.finance.log[m.key]||0;
+        const h=st.monthlyTarget>0?Math.min(saved/st.monthlyTarget,1)*100:0;
+        const hit=st.monthlyTarget>0&&saved>=st.monthlyTarget;
+        return `<div class="bar-col">
+          <div class="bar-val">${saved>0?Math.round(saved/1000000)+'tr':''}</div>
+          <div class="bar-track">
+            <div class="bar-target-line"></div>
+            <div class="bar-fill" style="height:${h}%;background:${hit?'#66BB6A':'#64B5F6'}"></div>
+          </div>
+          <div class="bar-month" style="color:${m.key===YM?'var(--accent)':'var(--text-3)'}">${m.label}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="field-note" style="margin-top:10px">Đường kẻ trên = mục tiêu 100% (${fmtVND(st.monthlyTarget)}). Thói quen tiết kiệm hôm nay → 2029 sẵn sàng đầu tư 💪</div>
+  </div>`;
+}
+function setIncome(v) {
+  S.finance.income=parseNum(v); save();
+  document.querySelector('[oninput="setIncome(this.value)"]').nextElementSibling.textContent='= '+fmtVND(S.finance.income);
+}
+function setRate(v) { S.finance.rate=Math.min(100,parseNum(v)); save(); }
+function setMonthSaved(v) { S.finance.log[YM]=parseNum(v); save(); }
+
+// ─── OVERVIEW ────────────────────────────────────────────
+let selectedPhase = null;
+function renderOverview(el) {
+  const st=getStats();
+  const avgMoodObj=MOODS.find(m=>m.v===Math.round(st.avgMood))||null;
+
+  // Weekly habit completion rate (last 7 days across all habits)
+  const last7days=[]; for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);last7days.push(dateStr(d));}
+  const weeklyRates=last7days.map(dk=>{
+    const done=S.habits.filter(h=>S.habitLog[`${h.id}|${dk}`]).length;
+    return S.habits.length?Math.round(done/S.habits.length*100):0;
+  });
+  const DOW_MINI=['CN','T2','T3','T4','T5','T6','T7'];
+
+  el.innerHTML = `
+  <!-- Stats hero -->
+  <div class="card" style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;justify-content:center">
+    ${ringHTML(st.habitsPct,120,11,phase.color,
+      `<div style="font-size:28px;font-weight:800;color:var(--text-1)">${st.habitsPct}%</div>
+       <div class="ring-label" style="color:var(--text-3)">HÔM NAY</div>`)}
+    <div class="stat-grid">
+      ${[
+        {v:`${st.longestStreak}🔥`,l:'Chuỗi dài nhất'},
+        {v:st.journalCount,l:'Nhật ký đã viết'},
+        {v:`🍅 ${st.pomodoros}`,l:'Pomodoro hôm nay'},
+        {v:avgMoodObj?avgMoodObj.emoji:'—',l:'Tâm trạng TB tháng'},
+        {v:fmtVND(st.totalSaved).replace(' ₫',''),l:'Tiết kiệm (₫)'},
+        {v:`${st.doneSteps}/${st.allSteps}`,l:'Cột mốc'},
+      ].map(s=>`<div class="stat-tile"><div class="stat-tile-val">${s.v}</div><div class="stat-tile-label">${s.l}</div></div>`).join('')}
+    </div>
+  </div>
+
+  <!-- Weekly habit sparkline -->
+  <div class="card">
+    <div class="label">📈 Thói quen 7 ngày qua</div>
+    <div style="display:flex;gap:6px;align-items:flex-end;height:80px">
+      ${last7days.map((dk,i)=>{
+        const d=new Date(); d.setDate(d.getDate()-(6-i));
+        const rate=weeklyRates[i];
+        const isToday=dk===TODAY;
+        const col=rate>=80?'#66BB6A':rate>=50?phase.color:'#E8E5DF';
+        return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px">
+          <div style="font-size:9px;font-weight:700;color:${rate>0?'var(--text-2)':'var(--text-4)'}">${rate>0?rate+'%':''}</div>
+          <div style="width:100%;max-width:44px;height:52px;background:var(--bg);border-radius:7px;display:flex;align-items:flex-end;overflow:hidden;border:${isToday?`2px solid ${phase.color}`:'2px solid transparent'}">
+            <div style="width:100%;height:${Math.max(rate,4)}%;background:${col};border-radius:7px 7px 0 0;transition:height .4s"></div>
+          </div>
+          <div style="font-size:9px;font-weight:700;color:${isToday?phase.color:'var(--text-4)'};">${DOW_MINI[d.getDay()]}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="display:flex;gap:14px;margin-top:12px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:3px;background:#66BB6A"></div><span style="font-size:10px;color:var(--text-3);font-weight:600">≥ 80%</span></div>
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:3px;background:${phase.color}"></div><span style="font-size:10px;color:var(--text-3);font-weight:600">≥ 50%</span></div>
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:3px;background:#E8E5DF"></div><span style="font-size:10px;color:var(--text-3);font-weight:600">< 50%</span></div>
+    </div>
+  </div>
+
+  <!-- Goal progress -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <div class="label" style="margin-bottom:0">🎯 Tiến độ mục tiêu lớn</div>
+      <button class="btn btn-outline" onclick="setTab('goals')" style="font-size:12px;padding:7px 13px">Xem chi tiết →</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:11px">
+      ${S.goals.map(g=>{
+        const total=g.steps.length,done=g.steps.filter(s=>s.done).length;
+        const pct=total?Math.round(done/total*100):0, col=phaseColor(g.year);
+        return `<div class="goal-overview-row" style="cursor:pointer" onclick="setTab('goals')" title="Xem mục tiêu">
+          <span style="font-size:18px;width:22px;text-align:center">${g.icon}</span>
+          <div class="goal-overview-meta">
+            <div class="goal-overview-name">${g.title}</div>
+            <div class="goal-overview-sub">${g.year} · ${done}/${total} bước</div>
+          </div>
+          <div class="progress-track" style="flex:1;height:7px">
+            <div class="progress-fill" style="width:${pct}%;background:${col}"></div>
+          </div>
+          <span class="goal-overview-pct" style="color:${col}">${pct}%</span>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>
+
+  <!-- Phase roadmap — CLICKABLE -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <div class="label" style="margin-bottom:0">🗺 Tầm nhìn 5 năm · 2026–2030</div>
+      <span style="font-size:10px;color:var(--text-4);font-weight:600">Nhấn vào từng năm để xem chi tiết</span>
+    </div>
+    <div class="phase-cards" style="margin-top:14px" id="phase-cards-row">
+      ${PHASES.map(p=>{
+        const active=p.year===CUR_YEAR, sel=selectedPhase===p.year;
+        return `<div class="phase-card${active?' active':''}${sel?' selected':''}"
+          style="--phase-col:${p.color};--phase-light:${p.light};${active?`border-color:${p.color};background:${p.light}`:''}"
+          onclick="selectPhase('${p.year}')">
+          ${active?`<div class="phase-card-badge" style="background:${p.color}">BẠN Ở ĐÂY</div>`:''}
+          <div class="phase-card-emoji">${p.emoji}</div>
+          <div class="phase-card-year" style="color:${active||sel?p.color:'var(--text-1)'}">${p.year}</div>
+          <div class="phase-card-label">${p.label}</div>
+          ${p.goals.map(g=>`<div class="phase-card-goal">${g}</div>`).join('')}
+          <div class="phase-card-hint">Nhấn để xem ↓</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div id="phase-detail-slot"></div>
+  </div>
+
+  <!-- Why -->
+  <div class="card-dark">
+    <div class="why-box">
+      <div class="why-icon">💡</div>
+      <div>
+        <div class="why-sub">NHỚ LẠI VÌ SAO</div>
+        <div class="why-text">Mỗi việc nhỏ hôm nay là một viên gạch cho tầm nhìn 2030. Tick từng bước, giữ chuỗi thói quen, và review lại roadmap mỗi tháng — flexibility là chìa khóa của kế hoạch bền vững.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cursive-footer">Christina's Command Center · 2026–2030</div>`;
+
+  // Re-open selected phase if any
+  if(selectedPhase) renderPhaseDetail(selectedPhase);
+}
+
+function selectPhase(year) {
+  if(selectedPhase===year) { selectedPhase=null; }
+  else { selectedPhase=year; }
+  // Update card selected states
+  document.querySelectorAll('.phase-card').forEach(el=>{
+    const yr=el.querySelector('.phase-card-year');
+    if(!yr) return;
+    el.classList.toggle('selected', yr.textContent===selectedPhase);
+  });
+  renderPhaseDetail(selectedPhase);
+}
+
+function renderPhaseDetail(year) {
+  const slot=document.getElementById('phase-detail-slot'); if(!slot) return;
+  if(!year){ slot.innerHTML=''; return; }
+  const p=PHASES.find(x=>x.year===year); if(!p) return;
+
+  // goals that belong to this year
+  const phaseGoals=S.goals.filter(g=>g.year===year);
+
+  // milestone descriptions per phase
+  const MILESTONES={
+    '2026':['Xây dựng nền tảng vững chắc — đây là năm đặt hạt giống','IELTS 7.0 mở cánh cửa cho PhD và cơ hội quốc tế','Daily journaling tạo thói quen reflect & grow hàng ngày','Personal Branding trên LinkedIn: 2 bài/tuần'],
+    '2027':['Năm tăng tốc ngôn ngữ — IELTS 8.0 + HSK 5','Bắt đầu research proposal cho PhD application','Healthy lifestyle: vận động đều đặn, ngủ đủ giấc','Chuẩn bị hồ sơ học bổng cho chương trình PhD'],
+    '2028':['Năm bản lề — PhD bắt đầu + Lên Supply Chain Director','Viết sách chuyên khảo: 1.000 từ/ngày, mỗi tuần 1 chương','Xây dựng mạng lưới học thuật quốc tế','Cân bằng giữa công việc, học thuật và cuộc sống'],
+    '2029':['Tiết kiệm 30%/tháng — chuẩn bị nền tảng tài chính','Trip to China: kết hợp du lịch + networking SCM','Mở rộng ảnh hưởng trong ngành SCM/ESG','PhD giữa kỳ: nghiên cứu chuyên sâu + publish papers'],
+    '2030':['Năm hoàn thành — PhD + YouTube Channel ra mắt','Family life: cân bằng sự nghiệp và gia đình','YouTube SCM channel: chia sẻ kiến thức cho cộng đồng','Nhìn lại hành trình 5 năm và lập kế hoạch 2031–2035'],
+  };
+  const milestones=MILESTONES[year]||[];
+
+  slot.innerHTML=`
+  <div class="phase-detail" style="margin-top:12px;border-left:4px solid ${p.color}">
+    <div class="phase-detail-header">
+      <div class="phase-detail-icon">${p.emoji}</div>
+      <div>
+        <div class="phase-detail-title" style="color:${p.color}">${p.year} — ${p.label}</div>
+        <div class="phase-detail-sub">${p.goals.join(' · ')}</div>
+      </div>
+      <div class="phase-detail-close" onclick="selectPhase('${year}')">×</div>
+    </div>
+
+    ${phaseGoals.length>0?`
+    <div style="font-size:11px;font-weight:800;letter-spacing:2px;color:var(--text-3);text-transform:uppercase;margin-bottom:10px">Mục tiêu có tracking</div>
+    <div class="phase-detail-goals-grid">
+      ${phaseGoals.map(g=>{
+        const total=g.steps.length, done=g.steps.filter(s=>s.done).length;
+        const pct=total?Math.round(done/total*100):0;
+        return `<div class="phase-goal-tile">
+          <div class="phase-goal-tile-icon">${g.icon}</div>
+          <div class="phase-goal-tile-title">${g.title}</div>
+          <div class="phase-goal-tile-target">${g.target}</div>
+          <div class="phase-goal-tile-bar"><div class="phase-goal-tile-fill" style="width:${pct}%;background:${p.color}"></div></div>
+          <div class="phase-goal-tile-pct" style="color:${p.color}">${pct}% · ${done}/${total} bước</div>
+        </div>`;
+      }).join('')}
+    </div>`:''}
+
+    <div style="font-size:11px;font-weight:800;letter-spacing:2px;color:var(--text-3);text-transform:uppercase;margin-bottom:10px">Key milestones</div>
+    <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:16px">
+      ${milestones.map((m,i)=>`
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border-radius:var(--radius-sm);background:${p.light}">
+          <div style="width:20px;height:20px;border-radius:50%;background:${p.color};color:white;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">${i+1}</div>
+          <div style="font-size:12.5px;color:var(--text-1);font-weight:500;line-height:1.5">${m}</div>
+        </div>`).join('')}
+    </div>
+
+    <div class="phase-detail-cta" onclick="setTab('goals')" style="border-color:${p.color}40;color:${p.color}">
+      <span style="font-size:16px">${p.emoji}</span>
+      <span>Xem & cập nhật mục tiêu ${p.year} → Tab Mục tiêu</span>
+    </div>
+  </div>`;
+}
+
+
+// ─── KẾ HOẠCH 5 NĂM ─────────────────────────────────────
+const STRATEGIC_PLAN = {
+  "2026": {
+    theme: "Nền tảng & Kỷ luật",
+    tagline: "Xây móng vững — mọi thứ lớn đều bắt đầu từ đây",
+    color: "#E8611A", light: "#FEF0E7", emoji: "🌱",
+    quarters: [
+      {
+        q: "Q1 · Jan–Mar",
+        focus: "Thiết lập hệ thống",
+        tasks: [
+          "Đăng ký lớp IELTS chính thức + lên lịch học hàng ngày",
+          "Mua sách IELTS Cambridge 18–19, bắt đầu từ Listening",
+          "Tạo profile LinkedIn chuyên nghiệp — ảnh, banner, About",
+          "Lập thói quen: journal mỗi sáng 6:30, viết 10 phút",
+          "Xác định niche Personal Brand: SCM × ESG × Academia",
+        ]
+      },
+      {
+        q: "Q2 · Apr–Jun",
+        focus: "Tăng tốc IELTS",
+        tasks: [
+          "Hoàn thành Cambridge 18, chuyển sang Cambridge 19",
+          "Thi thử IELTS lần 1 — mục tiêu band 6.5, đánh giá gap",
+          "Đăng đều 2 bài LinkedIn/tuần về Supply Chain & ESG",
+          "Bắt đầu viết Academic blog: 1 bài/tháng, ≥ 800 từ",
+          "Kết nối 50 người trong ngành SCM trên LinkedIn",
+        ]
+      },
+      {
+        q: "Q3 · Jul–Sep",
+        focus: "Mock tests & Branding",
+        tasks: [
+          "Thi thử IELTS lần 2 — mục tiêu band 7.0",
+          "Writing: luyện Task 2 hàng ngày, nhờ mentor feedback",
+          "Speaking: tham gia English Speaking Club 2x/tuần",
+          "Ra mắt Personal Brand kit: logo, màu sắc, tone of voice",
+          "Viết 5 bài LinkedIn đạt > 500 impressions mỗi bài",
+        ]
+      },
+      {
+        q: "Q4 · Oct–Dec",
+        focus: "Thi thật & Tổng kết",
+        tasks: [
+          "🎯 Đăng ký thi IELTS chính thức — mục tiêu 7.0",
+          "Nếu đạt 7.0: ăn mừng, lập kế hoạch IELTS 8.0 cho 2027",
+          "Nếu chưa đạt: phân tích điểm yếu, điều chỉnh chiến lược",
+          "Viết Annual Review 2026: thành tích, bài học, mục tiêu 2027",
+          "Lên kế hoạch học HSK 1 trong Q1/2027",
+        ]
+      }
+    ],
+    kpis: [
+      { icon:"🎓", label:"IELTS Band", target:"7.0", unit:"" },
+      { icon:"✍️", label:"Journal entries", target:"200+", unit:"ngày" },
+      { icon:"💼", label:"LinkedIn posts", target:"50+", unit:"bài" },
+      { icon:"🤝", label:"Network", target:"200+", unit:"connections" },
+    ]
+  },
+  "2027": {
+    theme: "Tăng tốc & Chuẩn bị",
+    tagline: "Nâng tầm ngôn ngữ — chuẩn bị bệ phóng PhD",
+    color: "#388E3C", light: "#E8F5E9", emoji: "📚",
+    quarters: [
+      {
+        q: "Q1 · Jan–Mar",
+        focus: "HSK + IELTS 8.0 bắt đầu",
+        tasks: [
+          "Đăng ký khóa HSK 1–2 online (Coursera / YCT platform)",
+          "Học 20 từ tiếng Trung/ngày, dùng Anki flashcard",
+          "Nâng IELTS Writing: tập Academic Task 1 (graphs, charts)",
+          "Liên hệ 3 giáo sư SCM/ESG tại NUS, RMIT, Maastricht",
+          "Đọc 2 academic papers/tuần trong lĩnh vực SCM & ESG",
+        ]
+      },
+      {
+        q: "Q2 · Apr–Jun",
+        focus: "HSK 3 + Research Direction",
+        tasks: [
+          "Thi HSK 2, mục tiêu đạt ≥ 90%",
+          "Bắt đầu học HSK 3 — ngữ pháp trung cấp",
+          "Xác định Research Topic cho PhD: SCM + ESG + AI/Data",
+          "Viết Research Interest Statement (1–2 trang) bản nháp",
+          "Tham dự 1 conference online về Supply Chain / Sustainability",
+        ]
+      },
+      {
+        q: "Q3 · Jul–Sep",
+        focus: "IELTS 8.0 mock + HSK 4",
+        tasks: [
+          "Thi thử IELTS — mục tiêu band 7.5",
+          "Học HSK 4 — 1.200 từ vựng, luyện đọc báo Trung Quốc",
+          "Hoàn thiện Research Proposal bản đầy đủ (5–8 trang)",
+          "Chọn 5 trường target cho PhD: 2 dream, 2 match, 1 safe",
+          "Liên hệ cựu sinh viên PhD tại các trường target để hỏi kinh nghiệm",
+        ]
+      },
+      {
+        q: "Q4 · Oct–Dec",
+        focus: "Thi thật IELTS 8.0 + HSK 5 prep",
+        tasks: [
+          "🎯 Thi IELTS chính thức — mục tiêu 8.0",
+          "🎯 Thi HSK 5 — mục tiêu ≥ 180/300",
+          "Chuẩn bị hồ sơ PhD: SOP, CV học thuật, writing samples",
+          "Xin 3 thư giới thiệu từ giáo sư/mentor uy tín",
+          "Nộp đơn PhD đợt 1 (December deadline) cho 2–3 trường",
+        ]
+      }
+    ],
+    kpis: [
+      { icon:"🎓", label:"IELTS Band", target:"8.0", unit:"" },
+      { icon:"🀄", label:"HSK Level", target:"5", unit:"" },
+      { icon:"📄", label:"Research Proposal", target:"1", unit:"hoàn chỉnh" },
+      { icon:"🏫", label:"PhD Applications", target:"5", unit:"trường" },
+    ]
+  },
+  "2028": {
+    theme: "Bứt phá & Kiến tạo",
+    tagline: "PhD bắt đầu — Sách ra đời — Sự nghiệp lên đỉnh",
+    color: "#E07B00", light: "#FFF8EE", emoji: "🚀",
+    quarters: [
+      {
+        q: "Q1 · Jan–Mar",
+        focus: "Nhập học PhD + Khởi động sách",
+        tasks: [
+          "🎓 Nhập học PhD chương trình SCM / ESG / Sustainability",
+          "Gặp advisor, thống nhất research plan và timeline",
+          "Xác định chủ đề sách: 'Supply Chain Transformation in the ESG Era'",
+          "Lập outline sách: 12 chương, mỗi chương ~5.000 từ",
+          "Thiết lập writing routine: 1.000 từ/ngày, 7:00–8:00 AM",
+        ]
+      },
+      {
+        q: "Q2 · Apr–Jun",
+        focus: "PhD Research + 3 chương sách",
+        tasks: [
+          "Hoàn thành literature review cho PhD (50+ papers)",
+          "Viết xong chương 1–3 của sách (nền tảng lý thuyết)",
+          "Đề xuất lên Supply Chain Director tại công ty hiện tại",
+          "Xây dựng data collection framework cho PhD research",
+          "Submit 1 conference paper từ preliminary research",
+        ]
+      },
+      {
+        q: "Q3 · Jul–Sep",
+        focus: "SC Director + 6 chương sách",
+        tasks: [
+          "🎯 Đảm nhiệm vai trò Supply Chain Director",
+          "Hoàn thành chương 4–6 của sách",
+          "Tiến hành field research/interviews cho PhD (10+ subjects)",
+          "Xây dựng team SCM mới, thiết lập KPIs và OKRs",
+          "Trình bày tại 1 industry conference về ESG in Supply Chain",
+        ]
+      },
+      {
+        q: "Q4 · Oct–Dec",
+        focus: "First Draft sách + PhD Milestone",
+        tasks: [
+          "🎯 Hoàn thành first draft toàn bộ 12 chương sách",
+          "Gửi draft cho 3 peer reviewers (giáo sư + practitioners)",
+          "Hoàn thành PhD Year 1 report — đạt xét duyệt tiếp tục",
+          "Thương lượng với NXB học thuật hoặc self-publish plan",
+          "Viết Annual Review 2028 — nhìn lại cột mốc lớn nhất",
+        ]
+      }
+    ],
+    kpis: [
+      { icon:"🔬", label:"PhD Year", target:"1", unit:"hoàn thành" },
+      { icon:"📖", label:"Sách first draft", target:"60.000+", unit:"từ" },
+      { icon:"💼", label:"Supply Chain Director", target:"✓", unit:"" },
+      { icon:"📄", label:"Papers submitted", target:"2+", unit:"" },
+    ]
+  },
+  "2029": {
+    theme: "Mở rộng & Tích lũy",
+    tagline: "Tài chính vững — Thế giới rộng — Ảnh hưởng sâu",
+    color: "#1976D2", light: "#E3F2FD", emoji: "🌏",
+    quarters: [
+      {
+        q: "Q1 · Jan–Mar",
+        focus: "Tài chính hệ thống + Sách xuất bản",
+        tasks: [
+          "Thiết lập hệ thống tài chính: 30% tiết kiệm, 20% đầu tư, 50% chi tiêu",
+          "Mở tài khoản đầu tư: index funds (VN30 / S&P500 ETF)",
+          "🎯 Xuất bản sách sau peer review và revision",
+          "Lên chiến dịch launch sách: LinkedIn, workshop, media",
+          "PhD Year 2: tiếp tục data collection và analysis",
+        ]
+      },
+      {
+        q: "Q2 · Apr–Jun",
+        focus: "Networking quốc tế + PhD Year 2",
+        tasks: [
+          "Tham dự 1 international SCM conference ở nước ngoài",
+          "Submit PhD chapter 2 paper cho journal Q1/Q2",
+          "Mở rộng consulting: nhận 2–3 ESG consulting projects",
+          "Xây dựng kế hoạch Trip to China chi tiết (tháng 10–11)",
+          "Tiết kiệm được 30% thu nhập liên tục 6 tháng",
+        ]
+      },
+      {
+        q: "Q3 · Jul–Sep",
+        focus: "Research hoàn thiện + Chuẩn bị China trip",
+        tasks: [
+          "Hoàn thành data analysis PhD — viết kết quả và thảo luận",
+          "Chuẩn bị nội dung Trip to China: factory visits, universities, suppliers",
+          "Lên kế hoạch YouTube channel: content pillars, equipment, script",
+          "Review tài chính 9 tháng — điều chỉnh danh mục đầu tư",
+          "Nhận và respond peer review comments cho journal paper",
+        ]
+      },
+      {
+        q: "Q4 · Oct–Dec",
+        focus: "🌏 Trip to China + PhD near finish",
+        tasks: [
+          "🎯 Trip to China (2–3 tuần): SCM factory visits, academic exchange",
+          "Ghé thăm Guangzhou (supply chain hub), Shanghai, Beijing",
+          "Kết nối với SCM professionals và academics tại Trung Quốc",
+          "PhD: hoàn thành thesis draft — submit cho advisor review",
+          "Lên kế hoạch cụ thể cho YouTube channel ra mắt 2030",
+        ]
+      }
+    ],
+    kpis: [
+      { icon:"💰", label:"Tỷ lệ tiết kiệm", target:"30%", unit:"/tháng" },
+      { icon:"🌏", label:"China Trip", target:"✓", unit:"hoàn thành" },
+      { icon:"📖", label:"Sách bán ra", target:"500+", unit:"bản" },
+      { icon:"📊", label:"Journals submitted", target:"2+", unit:"Q1/Q2" },
+    ]
+  },
+  "2030": {
+    theme: "Thành tựu & Di sản",
+    tagline: "PhD hoàn thành — YouTube ra mắt — Cuộc sống trọn vẹn",
+    color: "#7B1FA2", light: "#F3E5F5", emoji: "🌟",
+    quarters: [
+      {
+        q: "Q1 · Jan–Mar",
+        focus: "PhD Defence + YouTube ra mắt",
+        tasks: [
+          "🎓 Bảo vệ PhD thesis — trở thành Dr. Christina",
+          "Publish 1–2 journal papers từ PhD research",
+          "🎬 Ra mắt YouTube channel: 'Supply Chain with Christina'",
+          "Upload 4 videos trong tháng đầu — consistency là chìa khóa",
+          "Chia sẻ PhD journey trên LinkedIn — viral storytelling",
+        ]
+      },
+      {
+        q: "Q2 · Apr–Jun",
+        focus: "YouTube growth + Family planning",
+        tasks: [
+          "Đạt 1.000 subscribers YouTube đầu tiên",
+          "Thiết lập content calendar YouTube: 2 videos/tháng",
+          "Thảo luận và lập kế hoạch family life cùng partner",
+          "Bắt đầu nhận speaking invitations tại conferences",
+          "Viết bài Medium/Substack về PhD + SCM career journey",
+        ]
+      },
+      {
+        q: "Q3 · Jul–Sep",
+        focus: "Scale YouTube + Thought Leadership",
+        tasks: [
+          "Đạt 5.000 subscribers YouTube",
+          "Hợp tác với 2–3 creator/expert trong ngành SCM",
+          "Xuất bản sách thứ 2 (hoặc updated edition sách 2028)",
+          "Nhận vai trò Adjunct Professor mở rộng (thêm trường)",
+          "Lên kế hoạch 5 năm tiếp theo: 2031–2035",
+        ]
+      },
+      {
+        q: "Q4 · Oct–Dec",
+        focus: "Tổng kết hành trình 5 năm",
+        tasks: [
+          "🌟 Nhìn lại hành trình 2026–2030: viết 'Annual Letter to Self'",
+          "Đo lường tác động: bao nhiêu người được inspire bởi content?",
+          "Đạt 10.000 subscribers YouTube — monetize channel",
+          "Family milestone: hướng đến cuộc sống cân bằng và hạnh phúc",
+          "Celebrate — bạn đã trở thành phiên bản tốt nhất của mình ✨",
+        ]
+      }
+    ],
+    kpis: [
+      { icon:"🎓", label:"PhD", target:"Dr. Christina", unit:"" },
+      { icon:"🎬", label:"YouTube", target:"10.000+", unit:"subscribers" },
+      { icon:"👨‍👩‍👧", label:"Family Life", target:"✓", unit:"cân bằng" },
+      { icon:"🌍", label:"Tầm ảnh hưởng", target:"Quốc tế", unit:"" },
+    ]
+  }
+};
+
+let planSelectedYear = "2026";
+
+function renderPlan(el) {
+  const accentMap={"2026":"#E8611A","2027":"#388E3C","2028":"#E07B00","2029":"#1976D2","2030":"#7B1FA2"};
+
+  el.innerHTML = `
+  <!-- Header -->
+  <div class="card-dark">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:10px;font-weight:800;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:8px">🗺 KẾ HOẠCH CHIẾN LƯỢC 5 NĂM</div>
+        <div style="font-size:22px;font-weight:900;color:white;line-height:1.25;margin-bottom:6px">Christina's Master Plan<br><span style="color:var(--accent)">2026 → 2030</span></div>
+        <div style="font-size:12.5px;color:rgba(255,255,255,.55);line-height:1.7;max-width:520px">Từ Chuyên gia SCM/ESG → PhD → Supply Chain Director → Author → YouTube Creator. Mỗi năm một theme rõ ràng, mỗi quý có focus cụ thể, mỗi tuần có hành động đo lường được.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        ${PHASES.map(p=>`
+          <div style="display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:8px;background:rgba(255,255,255,.05)">
+            <span style="font-size:13px">${p.emoji}</span>
+            <span style="font-size:11px;font-weight:800;color:${p.color}">${p.year}</span>
+            <span style="font-size:10.5px;color:rgba(255,255,255,.4)">${p.label}</span>
+          </div>`).join('')}
+      </div>
+    </div>
+  </div>
+
+  <!-- Year selector tabs -->
+  <div style="display:flex;gap:6px;flex-wrap:wrap">
+    ${Object.entries(STRATEGIC_PLAN).map(([yr,plan])=>{
+      const sel=planSelectedYear===yr;
+      return `<div onclick="selectPlanYear('${yr}')" style="cursor:pointer;padding:9px 18px;border-radius:30px;font-size:13px;font-weight:800;border:2px solid ${sel?plan.color:accentMap[yr]+'33'};background:${sel?plan.color:'transparent'};color:${sel?'white':plan.color};transition:all .15s;user-select:none">
+        ${plan.emoji} ${yr}
+        ${yr===CUR_YEAR?'<span style="font-size:9px;opacity:.8"> ← bạn đây</span>':''}
+      </div>`;
+    }).join('')}
+  </div>
+
+  <!-- Year detail -->
+  <div id="plan-year-detail"></div>
+  `;
+  renderPlanYearDetail(planSelectedYear);
+}
+
+function selectPlanYear(yr) {
+  planSelectedYear=yr;
+  document.querySelectorAll('[onclick^="selectPlanYear"]').forEach(el=>{
+    const elYr=el.onclick.toString().match(/'(\d{4})'/)?.[1];
+    if(!elYr) return;
+    const plan=STRATEGIC_PLAN[elYr];
+    if(!plan) return;
+    const sel=elYr===yr;
+    el.style.background=sel?plan.color:'transparent';
+    el.style.color=sel?'white':plan.color;
+    el.style.borderColor=sel?plan.color:plan.color+'33';
+  });
+  renderPlanYearDetail(yr);
+}
+
+function renderPlanYearDetail(yr) {
+  const slot=document.getElementById('plan-year-detail'); if(!slot) return;
+  const plan=STRATEGIC_PLAN[yr]; if(!plan) return;
+
+  // related goals progress
+  const relGoals=S.goals.filter(g=>g.year===yr);
+
+  slot.innerHTML=`
+  <!-- Theme header -->
+  <div style="padding:20px 22px;border-radius:16px;background:${plan.light};border:2px solid ${plan.color}33">
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px">
+      <div style="font-size:32px">${plan.emoji}</div>
+      <div style="flex:1">
+        <div style="font-size:18px;font-weight:900;color:${plan.color}">${yr} — ${plan.theme}</div>
+        <div style="font-size:12.5px;color:#666;margin-top:3px;font-style:italic">"${plan.tagline}"</div>
+      </div>
+    </div>
+    <!-- KPIs -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px">
+      ${plan.kpis.map(k=>`
+        <div style="background:white;border-radius:10px;padding:12px 13px;border:1px solid ${plan.color}22">
+          <div style="font-size:17px;margin-bottom:4px">${k.icon}</div>
+          <div style="font-size:18px;font-weight:900;color:${plan.color}">${k.target}</div>
+          <div style="font-size:10px;color:#888;font-weight:600;margin-top:1px">${k.label}${k.unit?' · '+k.unit:''}</div>
+        </div>`).join('')}
+    </div>
+  </div>
+
+  ${relGoals.length>0?`
+  <!-- Linked goals -->
+  <div class="card" style="border-left:3px solid ${plan.color}">
+    <div class="label">🎯 Mục tiêu có tracking trong năm này</div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      ${relGoals.map(g=>{
+        const total=g.steps.length, done=g.steps.filter(s=>s.done).length;
+        const pct=total?Math.round(done/total*100):0;
+        return `<div style="display:flex;align-items:center;gap:12px;cursor:pointer" onclick="setTab('goals')" title="→ Tab Mục tiêu">
+          <span style="font-size:17px">${g.icon}</span>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700">${g.title} <span style="font-size:11px;color:#999">· ${g.target}</span></div>
+            <div style="height:5px;background:#eee;border-radius:10px;margin-top:5px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;background:${plan.color};border-radius:10px;transition:width .5s"></div>
+            </div>
+          </div>
+          <span style="font-size:12px;font-weight:800;color:${plan.color};min-width:36px;text-align:right">${pct}%</span>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`:''}
+
+  <!-- Quarterly plan -->
+  <div class="card">
+    <div class="label">📅 Kế hoạch theo quý</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">
+      ${plan.quarters.map((qtr,qi)=>`
+        <div style="border:1.5px solid ${plan.color}${qi===0?'':'33'};border-radius:12px;overflow:hidden">
+          <div style="padding:11px 14px;background:${qi===0?plan.color:plan.light};display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-size:11px;font-weight:800;color:${qi===0?'rgba(255,255,255,.7)':plan.color};letter-spacing:1px">${qtr.q}</div>
+              <div style="font-size:13px;font-weight:800;color:${qi===0?'white':plan.color};margin-top:1px">${qtr.focus}</div>
+            </div>
+            <div style="width:28px;height:28px;border-radius:50%;background:${qi===0?'rgba(255,255,255,.2)':plan.color+'22'};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:${qi===0?'white':plan.color}">Q${qi+1}</div>
+          </div>
+          <div style="padding:12px 14px;display:flex;flex-direction:column;gap:7px">
+            ${qtr.tasks.map(t=>`
+              <div style="display:flex;align-items:flex-start;gap:9px">
+                <div style="width:6px;height:6px;border-radius:50%;background:${plan.color};flex-shrink:0;margin-top:5px"></div>
+                <div style="font-size:12.5px;color:#444;line-height:1.5;font-weight:${t.startsWith('🎯')?700:400}">${t}</div>
+              </div>`).join('')}
+          </div>
+        </div>`).join('')}
+    </div>
+  </div>
+
+  <!-- Monthly habit suggestion -->
+  <div class="card" style="background:linear-gradient(135deg,${plan.light},white)">
+    <div class="label">🔥 Thói quen nền tảng cho ${yr}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:9px">
+      ${getHabitSuggestions(yr).map(h=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:white;border:1px solid ${plan.color}22">
+          <span style="font-size:18px">${h.icon}</span>
+          <div>
+            <div style="font-size:12.5px;font-weight:700;color:#1a1a1a">${h.name}</div>
+            <div style="font-size:10.5px;color:#888;margin-top:1px">${h.freq}</div>
+          </div>
+        </div>`).join('')}
+    </div>
+  </div>
+
+  <!-- Weekly template -->
+  <div class="card">
+    <div class="label">📋 Template tuần lý tưởng · ${yr}</div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
+      ${getWeekTemplate(yr).map((day,i)=>`
+        <div style="border-radius:10px;overflow:hidden;border:1px solid ${plan.color}22">
+          <div style="padding:7px 5px;background:${i===5||i===6?'#f5f5f5':plan.color};text-align:center">
+            <div style="font-size:9px;font-weight:800;color:${i===5||i===6?'#999':'rgba(255,255,255,.7)'};">${day.label}</div>
+          </div>
+          <div style="padding:7px 6px;display:flex;flex-direction:column;gap:4px;background:white">
+            ${day.tasks.map(t=>`<div style="font-size:9.5px;color:#555;padding:3px 5px;border-radius:4px;background:${plan.color}10;line-height:1.35">${t}</div>`).join('')}
+          </div>
+        </div>`).join('')}
+    </div>
+  </div>
+
+  <!-- Quote / mindset -->
+  <div class="card-dark" style="border-left:4px solid ${plan.color}">
+    <div style="font-size:10px;font-weight:800;letter-spacing:2px;color:${plan.color};margin-bottom:8px">MINDSET ${yr}</div>
+    <div style="font-size:15px;color:white;font-style:italic;line-height:1.8">"${getMindset(yr)}"</div>
+  </div>
+  `;
+}
+
+function getHabitSuggestions(yr) {
+  const map = {
+    "2026": [
+      {icon:"✍️",name:"Journal buổi sáng",freq:"Mỗi ngày · 10 phút"},
+      {icon:"🎧",name:"IELTS Listening",freq:"Mỗi ngày · 30–45 phút"},
+      {icon:"🗣️",name:"IELTS Speaking",freq:"3x/tuần · 30 phút"},
+      {icon:"💼",name:"Viết LinkedIn post",freq:"2x/tuần"},
+      {icon:"📚",name:"Đọc sách/article",freq:"Mỗi ngày · 20 phút"},
+      {icon:"🏃",name:"Vận động",freq:"4x/tuần · 30 phút"},
+    ],
+    "2027": [
+      {icon:"🀄",name:"Học tiếng Trung HSK",freq:"Mỗi ngày · 30 phút"},
+      {icon:"🎧",name:"IELTS Band 8 prep",freq:"Mỗi ngày · 45 phút"},
+      {icon:"📄",name:"Đọc academic papers",freq:"2x/tuần · 1 paper"},
+      {icon:"✍️",name:"Viết Research notes",freq:"3x/tuần · 20 phút"},
+      {icon:"🤝",name:"Networking call",freq:"1x/tuần · 30 phút"},
+      {icon:"🧘",name:"Mindfulness/Yoga",freq:"Mỗi ngày · 15 phút"},
+    ],
+    "2028": [
+      {icon:"📖",name:"Viết sách",freq:"Mỗi ngày · 1.000 từ"},
+      {icon:"🔬",name:"PhD research",freq:"3 giờ/ngày focused"},
+      {icon:"💼",name:"SC Director tasks",freq:"Ưu tiên cao nhất"},
+      {icon:"📄",name:"Academic writing",freq:"2x/tuần · paper draft"},
+      {icon:"🏃",name:"Vận động",freq:"5x/tuần · duy trì năng lượng"},
+      {icon:"🌙",name:"Evening review",freq:"Mỗi tối · 10 phút"},
+    ],
+    "2029": [
+      {icon:"💰",name:"Track tài chính",freq:"Mỗi tuần · Sunday"},
+      {icon:"🔬",name:"PhD thesis writing",freq:"2 giờ/ngày"},
+      {icon:"🌏",name:"Học về Trung Quốc SCM",freq:"2x/tuần"},
+      {icon:"📊",name:"ESG consulting prep",freq:"3x/tuần"},
+      {icon:"🎬",name:"Lên kế hoạch YouTube",freq:"1x/tuần"},
+      {icon:"📚",name:"Đọc investment books",freq:"1 quyển/tháng"},
+    ],
+    "2030": [
+      {icon:"🎬",name:"Quay/edit YouTube",freq:"2 videos/tháng"},
+      {icon:"✍️",name:"Viết content",freq:"3x/tuần"},
+      {icon:"👨‍👩‍👧",name:"Family time",freq:"Mỗi tối · không phone"},
+      {icon:"🌟",name:"Mentoring others",freq:"1x/tuần"},
+      {icon:"📚",name:"Tiếp tục học",freq:"1 course/quý"},
+      {icon:"💆",name:"Self-care ritual",freq:"Mỗi ngày · 20 phút"},
+    ],
+  };
+  return map[yr]||[];
+}
+
+function getWeekTemplate(yr) {
+  const templates = {
+    "2026": [
+      {label:"T2",tasks:["Journal","IELTS Listen","Writing Task"]},
+      {label:"T3",tasks:["IELTS Read","Speaking club","LinkedIn post"]},
+      {label:"T4",tasks:["Journal","Mock test","Network"]},
+      {label:"T5",tasks:["IELTS Listen","Writing review","SCM reading"]},
+      {label:"T6",tasks:["Speaking","LinkedIn post","Week review"]},
+      {label:"T7",tasks:["Full mock test","Personal brand"]},
+      {label:"CN",tasks:["Rest","Plan tuần mới","Reflect"]},
+    ],
+    "2027": [
+      {label:"T2",tasks:["HSK vocab","IELTS prep","Research read"]},
+      {label:"T3",tasks:["HSK grammar","Speaking 8.0","PhD notes"]},
+      {label:"T4",tasks:["HSK review","IELTS mock","Network call"]},
+      {label:"T5",tasks:["HSK listen","Writing task","Paper read"]},
+      {label:"T6",tasks:["HSK full mock","Research write","LinkedIn"]},
+      {label:"T7",tasks:["IELTS mock","Research proposal"]},
+      {label:"CN",tasks:["Rest","Review week","Plan ahead"]},
+    ],
+    "2028": [
+      {label:"T2",tasks:["1000 từ sách","PhD research","SC Director"]},
+      {label:"T3",tasks:["PhD writing","Team meeting","Sách chương"]},
+      {label:"T4",tasks:["Research","Peer review","SC strategy"]},
+      {label:"T5",tasks:["Viết sách","PhD data","Consulting"]},
+      {label:"T6",tasks:["Sách review","Paper draft","Team 1:1"]},
+      {label:"T7",tasks:["Sách sprint","PhD reading"]},
+      {label:"CN",tasks:["Family","Rest","Week plan"]},
+    ],
+    "2029": [
+      {label:"T2",tasks:["PhD thesis","ESG project","Finance track"]},
+      {label:"T3",tasks:["Consulting","PhD writing","China prep"]},
+      {label:"T4",tasks:["PhD research","Team","Invest review"]},
+      {label:"T5",tasks:["Consulting","Paper revision","YouTube plan"]},
+      {label:"T6",tasks:["PhD writing","LinkedIn","Weekly review"]},
+      {label:"T7",tasks:["Deep PhD work","Personal project"]},
+      {label:"CN",tasks:["Family","Rest","Plan tuần"]},
+    ],
+    "2030": [
+      {label:"T2",tasks:["YouTube script","PhD/research","Content"]},
+      {label:"T3",tasks:["Quay video","Speaking/consult","Writing"]},
+      {label:"T4",tasks:["Edit video","Mentoring","Family eve"]},
+      {label:"T5",tasks:["Content plan","Consulting","Upload YT"]},
+      {label:"T6",tasks:["Community","Personal brand","Week review"]},
+      {label:"T7",tasks:["Family time","Creative rest"]},
+      {label:"CN",tasks:["Reflect","Plan","Gratitude"]},
+    ],
+  };
+  return templates[yr]||[];
+}
+
+function getMindset(yr) {
+  const m = {
+    "2026": "Kỷ luật không phải là từ chối những điều bạn muốn — đó là chọn những điều bạn muốn nhất. Năm 2026, mỗi buổi sáng journal, mỗi giờ luyện IELTS là đầu tư cho Christina của 2030.",
+    "2027": "Ngôn ngữ không chỉ là công cụ giao tiếp — đó là cửa sổ nhìn vào một thế giới khác. IELTS 8.0 và HSK 5 mở ra không chỉ con đường PhD mà còn mở rộng cách bạn tư duy.",
+    "2028": "Làm nhiều thứ lớn cùng lúc không phải điên rồ — đó là tận dụng đỉnh cao năng lượng. PhD + Sách + SC Director: mỗi thứ nuôi dưỡng cái còn lại. Research làm sách hay hơn. Sách làm research sâu hơn.",
+    "2029": "Tiền là công cụ cho tự do, không phải mục tiêu. Tiết kiệm 30% không phải để giàu — để có options. China trip không phải du lịch — đó là đầu tư vào hiểu biết toàn cầu.",
+    "2030": "Bạn đã đến đây không phải bằng may mắn. Mỗi journal entry từ 2026, mỗi IELTS mock test, mỗi trang sách viết lúc 7 giờ sáng — tất cả dẫn đến ngày này. Giờ là lúc chia sẻ hành trình đó.",
+  };
+  return m[yr]||"";
+}
+
+
+// ─── BACKUP / RESTORE ────────────────────────────────────
+function openBackup() {
+  document.getElementById('backup-overlay').classList.add('show');
+  // Show current data info
+  const size = new Blob([JSON.stringify(S)]).size;
+  const el = document.getElementById('export-info');
+  const habitsDone = S.habits.filter(h=>S.habitLog[`${h.id}|${TODAY}`]).length;
+  const journalCount = Object.values(S.daily).filter(d=>{
+    const j=d.journal; return j&&((j.gratitude||[]).some(g=>g&&g.trim())||(j.lesson&&j.lesson.trim()));
+  }).length;
+  el.style.display='block';
+  el.innerHTML = `📊 Dữ liệu hiện tại: <strong>${S.habits.length} thói quen</strong> · <strong>${journalCount} nhật ký</strong> · <strong>${S.goals.reduce((a,g)=>a+g.steps.length,0)} bước mục tiêu</strong> · <strong>${(size/1024).toFixed(1)} KB</strong>`;
+}
+
+function closeBackup() {
+  document.getElementById('backup-overlay').classList.remove('show');
+  document.getElementById('import-textarea').value='';
+  const st=document.getElementById('import-status');
+  st.className='backup-status'; st.textContent='';
+}
+
+function getBackupData() {
+  const backup = {
+    version: 2,
+    exportDate: new Date().toISOString(),
+    exportDateVN: formatDateVN(new Date()),
+    appName: "Christina Command Center",
+    data: S
+  };
+  return JSON.stringify(backup, null, 2);
+}
+
+function exportJSON() {
+  const json = getBackupData();
+  const blob = new Blob([json], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const dateTag = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `Christina-CommandCenter-Backup-${dateTag}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  const el = document.getElementById('export-info');
+  el.style.display='block';
+  el.style.color='#388E3C';
+  el.innerHTML = `✅ Đã tải file backup thành công! Lưu vào Google Drive để an toàn nhất.`;
+}
+
+function copyJSON() {
+  const json = getBackupData();
+  navigator.clipboard.writeText(json).then(()=>{
+    const el = document.getElementById('export-info');
+    el.style.display='block';
+    el.style.color='#388E3C';
+    el.innerHTML = `✅ Đã copy JSON vào clipboard! Paste vào Google Docs / Notes để lưu.`;
+  }).catch(()=>{
+    alert('Không copy được. Hãy dùng nút Tải file backup thay thế.');
+  });
+}
+
+function importFromFile(event) {
+  const file = event.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('import-textarea').value = e.target.result;
+    // auto trigger import
+    importJSON();
+  };
+  reader.readAsText(file);
+  // reset input so same file can be selected again
+  event.target.value='';
+}
+
+function importJSON() {
+  const raw = document.getElementById('import-textarea').value.trim();
+  const st = document.getElementById('import-status');
+  st.className='backup-status'; st.textContent='';
+
+  if(!raw) {
+    st.className='backup-status err';
+    st.textContent='⚠️ Chưa có dữ liệu. Hãy chọn file hoặc paste JSON vào ô trên.';
+    return;
+  }
+
+  try {
+    let parsed = JSON.parse(raw);
+    // Support both raw state and wrapped backup format
+    let newState;
+    if(parsed.version && parsed.data) {
+      newState = parsed.data;
+    } else if(parsed.habits && parsed.habitLog !== undefined) {
+      newState = parsed;
+    } else {
+      throw new Error('Định dạng không hợp lệ');
+    }
+
+    // Validate structure
+    if(!Array.isArray(newState.habits)) throw new Error('Thiếu trường habits');
+
+    // Merge: keep new fields if state has them
+    S = {
+      habits: Array.isArray(newState.habits) ? newState.habits : DEFAULT_HABITS,
+      habitLog: newState.habitLog || {},
+      daily: newState.daily || {},
+      weekTasks: Array.isArray(newState.weekTasks) ? newState.weekTasks : DEFAULT_WEEK,
+      finance: newState.finance || { income:0, rate:30, log:{} },
+      goals: Array.isArray(newState.goals) && newState.goals.length ? newState.goals : DEFAULT_GOALS,
+    };
+    save();
+
+    const exportDate = parsed.exportDateVN || parsed.exportDate || 'không rõ';
+    const journalCount = Object.values(S.daily).filter(d=>{
+      const j=d.journal; return j&&((j.gratitude||[]).some(g=>g&&g.trim())||(j.lesson&&j.lesson.trim()));
+    }).length;
+
+    st.className='backup-status ok';
+    st.innerHTML = `✅ Khôi phục thành công! Backup ngày: ${exportDate}<br>${S.habits.length} thói quen · ${journalCount} nhật ký · ${S.goals.length} mục tiêu đã được tải.`;
+
+    // Re-render current tab
+    setTimeout(()=>{ renderTab(currentTab); renderSidebar(); }, 800);
+
+  } catch(e) {
+    st.className='backup-status err';
+    st.textContent = `❌ Lỗi: ${e.message}. Hãy kiểm tra lại file backup.`;
+  }
+}
+
+// Auto-backup reminder (once per week on Sunday)
+(function checkBackupReminder() {
+  const lastReminder = localStorage.getItem('pcc:lastBackupReminder');
+  const now = new Date();
+  if(now.getDay()===0) { // Sunday
+    const todayKey = dateStr(now);
+    if(lastReminder !== todayKey) {
+      localStorage.setItem('pcc:lastBackupReminder', todayKey);
+      setTimeout(()=>{
+        const remind = document.createElement('div');
+        remind.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#1C1C1C;color:white;padding:14px 18px;border-radius:14px;font-size:13px;font-weight:600;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,.25);display:flex;align-items:center;gap:12px;max-width:300px;animation:slideUp .3s ease';
+        remind.innerHTML = '<span style="font-size:20px">💾</span><div><div style="font-weight:800;margin-bottom:2px">Nhắc nhở backup tuần</div><div style="font-size:11.5px;color:rgba(255,255,255,.6)">Chủ nhật rồi! Backup data để không mất dữ liệu nhé.</div></div>';
+        const closeBtn = document.createElement('span');
+        closeBtn.style.cssText='cursor:pointer;color:rgba(255,255,255,.4);font-size:18px;margin-left:8px;flex-shrink:0';
+        closeBtn.textContent='×';
+        closeBtn.onclick=()=>remind.remove();
+        remind.appendChild(closeBtn);
+        remind.onclick=(e)=>{ if(e.target!==closeBtn){ openBackup(); remind.remove(); } };
+        document.body.appendChild(remind);
+        const style=document.createElement('style');
+        style.textContent='@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}';
+        document.head.appendChild(style);
+        setTimeout(()=>remind.remove(), 10000);
+      }, 2000);
+    }
+  }
+})();
+
+// ─── INIT ────────────────────────────────────────────────
+(function init() {
+  renderSidebar();
+  setTab('today');
+})();
+</script>
+
+<!-- BACKUP MODAL -->
+<div class="backup-modal-overlay" id="backup-overlay" onclick="if(event.target===this)closeBackup()">
+  <div class="backup-modal backup-modal-wrap">
+    <span class="backup-modal-close" onclick="closeBackup()">×</span>
+    <div class="backup-modal-title">💾 Backup & Khôi phục dữ liệu</div>
+    <div class="backup-modal-sub">Dữ liệu lưu trong trình duyệt này. Backup thường xuyên để không mất dữ liệu khi đổi máy hoặc xóa cache.</div>
+
+    <div class="backup-info">
+      ℹ️ <span>Dữ liệu gồm: thói quen, tasks, journal, tài chính, mục tiêu. <strong>Không</strong> bao gồm timer Pomodoro đang chạy.</span>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="backup-section">
+      <div class="backup-section-label">📤 Xuất dữ liệu (Export)</div>
+      <div class="backup-card">
+        <div class="backup-card-title">Tải file backup (.json)</div>
+        <div class="backup-card-desc">Tải về máy tính → lưu vào Google Drive / iCloud / USB. Khi cần, import lại để khôi phục toàn bộ.</div>
+        <div class="backup-action-row">
+          <button class="btn btn-dark" onclick="exportJSON()" style="font-size:13px">📥 Tải file backup</button>
+          <button class="btn btn-outline" onclick="copyJSON()" style="font-size:13px">📋 Copy JSON</button>
+        </div>
+      </div>
+      <div id="export-info" style="font-size:11.5px;color:var(--text-3);margin-top:6px;display:none"></div>
+    </div>
+
+    <!-- IMPORT -->
+    <div class="backup-section">
+      <div class="backup-section-label">📥 Khôi phục dữ liệu (Import)</div>
+      <div class="backup-card">
+        <div class="backup-card-title">Dán JSON hoặc chọn file backup</div>
+        <div class="backup-card-desc">Paste nội dung file .json vào ô bên dưới, hoặc chọn file từ máy tính.</div>
+        <input type="file" id="import-file-input" accept=".json" style="display:none" onchange="importFromFile(event)">
+        <div class="backup-action-row">
+          <button class="btn btn-outline" onclick="document.getElementById('import-file-input').click()" style="font-size:13px">📂 Chọn file .json</button>
+        </div>
+        <textarea class="backup-textarea" id="import-textarea" placeholder="Hoặc paste nội dung JSON backup vào đây..."></textarea>
+        <div class="backup-action-row">
+          <button class="btn btn-accent" onclick="importJSON()" style="font-size:13px">✅ Khôi phục dữ liệu</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('import-textarea').value=''">Xóa</button>
+        </div>
+        <div class="backup-status" id="import-status"></div>
+      </div>
+    </div>
+
+    <!-- SYNC TIP -->
+    <div class="backup-section" style="margin-bottom:0">
+      <div class="backup-section-label">📱 Dùng trên nhiều thiết bị</div>
+      <div class="backup-card" style="background:linear-gradient(135deg,#FEF0E7,#FFF8EE)">
+        <div class="backup-card-title">Cách đồng bộ giữa máy tính & điện thoại</div>
+        <div class="backup-card-desc" style="line-height:1.8">
+          <strong>1.</strong> Trên máy tính: nhấn <strong>Tải file backup</strong> → lưu vào Google Drive<br>
+          <strong>2.</strong> Trên điện thoại: mở Google Drive → tải file .json về<br>
+          <strong>3.</strong> Mở trang web Command Center trên điện thoại<br>
+          <strong>4.</strong> Nhấn Backup → Import → chọn file .json vừa tải<br>
+          <strong>💡 Tip:</strong> Backup mỗi tuần vào Chủ nhật khi làm weekly review
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
